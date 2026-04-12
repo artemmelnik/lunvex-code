@@ -322,6 +322,23 @@ class PermissionManager:
         self.rules.append(ToolNameRule("glob", PermissionLevel.AUTO, "Read-only operation"))
         self.rules.append(ToolNameRule("grep", PermissionLevel.AUTO, "Read-only operation"))
         self.rules.append(ToolNameRule("fetch_url", PermissionLevel.ASK, "External URL access"))
+        
+        # Git tools - read-only operations are safe
+        self.rules.append(ToolNameRule("git_status", PermissionLevel.AUTO, "Git status (read-only)"))
+        self.rules.append(ToolNameRule("git_diff", PermissionLevel.AUTO, "Git diff (read-only)"))
+        self.rules.append(ToolNameRule("git_log", PermissionLevel.AUTO, "Git log (read-only)"))
+        self.rules.append(ToolNameRule("git_show", PermissionLevel.AUTO, "Git show (read-only)"))
+        
+        # Git tools that modify state - require permission
+        self.rules.append(ToolNameRule("git_branch", PermissionLevel.ASK, "Git branch (can modify branches)"))
+        self.rules.append(ToolNameRule("git_add", PermissionLevel.ASK, "Git add (modifies staging area)"))
+        self.rules.append(ToolNameRule("git_commit", PermissionLevel.ASK, "Git commit (creates commits)"))
+        self.rules.append(ToolNameRule("git_push", PermissionLevel.ASK, "Git push (modifies remote repository)"))
+        self.rules.append(ToolNameRule("git_pull", PermissionLevel.ASK, "Git pull (modifies local repository)"))
+        self.rules.append(ToolNameRule("git_stash", PermissionLevel.ASK, "Git stash (modifies working directory)"))
+        self.rules.append(ToolNameRule("git_checkout", PermissionLevel.ASK, "Git checkout (can modify working directory)"))
+        self.rules.append(ToolNameRule("git_merge", PermissionLevel.ASK, "Git merge (modifies repository history)"))
+        self.rules.append(ToolNameRule("git_fetch", PermissionLevel.ASK, "Git fetch (updates local refs)"))
 
         # Safe bash commands (common development commands) - AUTO
         safe_bash_patterns = [

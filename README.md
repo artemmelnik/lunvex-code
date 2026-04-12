@@ -247,6 +247,7 @@ python -m lunvex_code.cli --help
 - [Developer Guide](docs/DEVELOPER_GUIDE.md) - Contributing and extending
 - [Permission System](docs/PermissionSystem.md) - Security and permissions
 - [Dependency Management](docs/DEPENDENCY_MANAGEMENT.md) - Managing project dependencies
+- [Git Tools](docs/GIT_TOOLS.md) - Git integration tools
 
 ### Project Information
 - [Roadmap](docs/ROADMAP.md) - Future plans and milestones

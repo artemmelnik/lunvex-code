@@ -116,6 +116,21 @@ def create_default_registry() -> ToolRegistry:
         VisualizeDependenciesTool,
     )
     from .file_tools import EditFileTool, ReadFileTool, WriteFileTool
+    from .git_tools import (
+        GitAddTool,
+        GitBranchTool,
+        GitCheckoutTool,
+        GitCommitTool,
+        GitDiffTool,
+        GitFetchTool,
+        GitLogTool,
+        GitMergeTool,
+        GitPullTool,
+        GitPushTool,
+        GitShowTool,
+        GitStashTool,
+        GitStatusTool,
+    )
     from .search_tools import GlobTool, GrepTool
     from .web_tools import FetchURLTool
 
@@ -137,5 +152,18 @@ def create_default_registry() -> ToolRegistry:
     registry.register(UpgradeDependenciesTool())
     registry.register(ScanVulnerabilitiesTool())
     registry.register(VisualizeDependenciesTool())
+    registry.register(GitStatusTool())
+    registry.register(GitDiffTool())
+    registry.register(GitLogTool())
+    registry.register(GitShowTool())
+    registry.register(GitBranchTool())
+    registry.register(GitAddTool())
+    registry.register(GitCommitTool())
+    registry.register(GitPushTool())
+    registry.register(GitPullTool())
+    registry.register(GitStashTool())
+    registry.register(GitCheckoutTool())
+    registry.register(GitMergeTool())
+    registry.register(GitFetchTool())
 
     return registry

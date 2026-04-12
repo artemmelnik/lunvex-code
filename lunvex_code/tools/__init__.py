@@ -15,6 +15,21 @@ from .dependency_tools import (
     VisualizeDependenciesTool,
 )
 from .file_tools import EditFileTool, ReadFileTool, WriteFileTool
+from .git_tools import (
+    GitAddTool,
+    GitBranchTool,
+    GitCheckoutTool,
+    GitCommitTool,
+    GitDiffTool,
+    GitFetchTool,
+    GitLogTool,
+    GitMergeTool,
+    GitPullTool,
+    GitPushTool,
+    GitShowTool,
+    GitStashTool,
+    GitStatusTool,
+)
 from .search_tools import GlobTool, GrepTool
 from .web_tools import FetchURLTool
 
@@ -38,4 +53,17 @@ __all__ = [
     "UpgradeDependenciesTool",
     "ScanVulnerabilitiesTool",
     "VisualizeDependenciesTool",
+    "GitStatusTool",
+    "GitDiffTool",
+    "GitLogTool",
+    "GitShowTool",
+    "GitBranchTool",
+    "GitAddTool",
+    "GitCommitTool",
+    "GitPushTool",
+    "GitPullTool",
+    "GitStashTool",
+    "GitCheckoutTool",
+    "GitMergeTool",
+    "GitFetchTool",
 ]
