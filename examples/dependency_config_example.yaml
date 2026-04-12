@@ -1,0 +1,80 @@
+# Example dependency configuration for LunVex Code
+# Save as .lunvex-deps.yaml in your project root
+
+dependency_policy:
+  # Security settings
+  security:
+    # Scan dependencies when files change
+    scan_on_change: true
+    
+    # Fail builds on critical vulnerabilities
+    fail_on_critical: false
+    
+    # Allowed licenses (case-insensitive partial matches)
+    allowed_licenses:
+      - MIT
+      - Apache-2.0
+      - BSD-3-Clause
+      - BSD-2-Clause
+      - ISC
+      - Unlicense
+      - Python-2.0
+    
+    # Blocked licenses (will trigger warnings)
+    blocked_licenses:
+      - GPL-3.0
+      - AGPL-3.0
+      - SSPL
+      - BSL
+  
+  # Auto-update settings
+  auto_update:
+    # Enable automatic dependency updates
+    enabled: true
+    
+    # Update level: patch, minor, or major
+    level: patch
+    
+    # Automatically apply updates (use with caution)
+    auto_apply: false
+    
+    # Create pull requests for updates (GitHub/GitLab)
+    create_pr: true
+    
+    # Update schedule: daily, weekly, monthly
+    schedule: weekly
+  
+  # Ignore settings
+  ignore:
+    # Packages to ignore (won't be updated or flagged)
+    packages:
+      - legacy-package
+      - internal-tool
+      - deprecated-lib
+    
+    # Vulnerabilities to ignore (CVE IDs)
+    vulnerabilities:
+      - CVE-2021-12345
+      - CVE-2022-67890
+    
+    # Licenses to ignore (won't trigger warnings)
+    licenses:
+      - Custom-Commercial
+      - Proprietary
+
+# Example for different project types:
+
+# For open source library:
+# - Use strict license checking
+# - Allow only OSI-approved licenses
+# - Enable patch and minor updates
+
+# For enterprise application:
+# - Block GPL licenses
+# - Enable security scanning
+# - Create PRs for updates (manual review)
+
+# For internal tool:
+# - Ignore internal packages
+# - Auto-apply patch updates
+# - Weekly security scans

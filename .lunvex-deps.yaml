@@ -1,0 +1,24 @@
+dependency_policy:
+  security:
+    scan_on_change: true
+    fail_on_critical: false
+    allowed_licenses:
+    - MIT
+    - Apache-2.0
+    - BSD-3-Clause
+    - BSD-2-Clause
+    - ISC
+    - Unlicense
+    blocked_licenses:
+    - GPL-3.0
+    - AGPL-3.0
+  auto_update:
+    enabled: true
+    level: patch
+    auto_apply: false
+    create_pr: false
+    schedule: weekly
+  ignore:
+    packages: []
+    vulnerabilities: []
+    licenses: []
