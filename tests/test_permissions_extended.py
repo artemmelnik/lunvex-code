@@ -330,6 +330,21 @@ class TestPermissionRuleClasses:
         # Test pattern matching
         assert rule._matches_pattern("ls -la", "ls:*") is True
         assert rule._matches_pattern("rm file", "ls:*") is False
+
+    def test_session_rule_check_supports_bash_prefix_patterns(self):
+        """SessionRule should match bash prefixes from allowlist patterns."""
+        rule = SessionRule()
+        rule.add_to_allowlist("bash(curl:*)")
+
+        assert rule.check("bash", {"command": "curl -s https://example.com"}) == PermissionLevel.AUTO
+
+    def test_session_rule_check_supports_write_alias(self):
+        """SessionRule write alias should match file path tools."""
+        rule = SessionRule()
+        rule.add_to_allowlist("write(*.py)")
+
+        assert rule.check("write_file", {"path": "/tmp/example.py"}) == PermissionLevel.AUTO
+        assert rule.check("edit_file", {"path": "/tmp/example.py"}) == PermissionLevel.AUTO
         assert rule._matches_pattern("test.py", "*.py") is True
         assert rule._matches_pattern("test.txt", "*.py") is False
         assert rule._matches_pattern("anything", "*") is True

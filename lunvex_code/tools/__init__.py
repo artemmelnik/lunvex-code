@@ -16,6 +16,7 @@ from .dependency_tools import (
 )
 from .file_tools import EditFileTool, ReadFileTool, WriteFileTool
 from .search_tools import GlobTool, GrepTool
+from .web_tools import FetchURLTool
 
 __all__ = [
     "Tool",
@@ -25,6 +26,7 @@ __all__ = [
     "EditFileTool",
     "GlobTool",
     "GrepTool",
+    "FetchURLTool",
     "BashTool",
     "AnalyzeDependenciesTool",
     "ListDependenciesTool",

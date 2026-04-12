@@ -3,10 +3,12 @@
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from lunvex_code.tools.base import ToolRegistry
 from lunvex_code.tools.file_tools import EditFileTool, ReadFileTool, WriteFileTool
 from lunvex_code.tools.search_tools import GlobTool, GrepTool
+from lunvex_code.tools.web_tools import FetchURLTool
 
 
 class TestToolRegistry:
@@ -36,6 +38,14 @@ class TestToolRegistry:
         tools = registry.list_tools()
         assert len(tools) == 1
         assert tools[0] == "read_file"
+
+    def test_register_fetch_url_tool(self):
+        """FetchURLTool should register like other tools."""
+        registry = ToolRegistry()
+        tool = FetchURLTool()
+        registry.register(tool)
+
+        assert registry.get("fetch_url") is tool
 
 
 class TestReadFileTool:
@@ -204,3 +214,55 @@ class TestGrepTool:
 
             assert result.success is True
             # Should indicate no matches found
+
+
+class TestFetchURLTool:
+    """Test cases for FetchURLTool."""
+
+    @patch("lunvex_code.tools.web_tools.requests.get")
+    def test_fetch_url_extracts_html_text(self, mock_get):
+        """Should fetch HTML and return readable text."""
+        response = Mock()
+        response.url = "https://example.com/article"
+        response.headers = {"content-type": "text/html; charset=utf-8"}
+        response.encoding = "utf-8"
+        response.iter_content.return_value = [
+            b"<html><head><title>Example Title</title></head>",
+            b"<body><main><h1>Hello</h1><p>World</p></main></body></html>",
+        ]
+        response.raise_for_status.return_value = None
+        mock_get.return_value = response
+
+        tool = FetchURLTool()
+        result = tool.execute(url="https://example.com/article")
+
+        assert result.success is True
+        assert "Example Title" in result.output
+        assert "Hello" in result.output
+        assert "World" in result.output
+
+    @patch("lunvex_code.tools.web_tools.requests.get")
+    def test_fetch_url_formats_json(self, mock_get):
+        """Should pretty-print JSON responses."""
+        response = Mock()
+        response.url = "https://api.example.com/data"
+        response.headers = {"content-type": "application/json"}
+        response.encoding = "utf-8"
+        response.iter_content.return_value = [b'{"status":"ok","items":[1,2]}']
+        response.raise_for_status.return_value = None
+        mock_get.return_value = response
+
+        tool = FetchURLTool()
+        result = tool.execute(url="https://api.example.com/data")
+
+        assert result.success is True
+        assert '"status": "ok"' in result.output
+        assert '"items": [' in result.output
+
+    def test_fetch_url_rejects_invalid_scheme(self):
+        """Should reject non-http URLs."""
+        tool = FetchURLTool()
+        result = tool.execute(url="file:///etc/passwd")
+
+        assert result.success is False
+        assert "http://" in result.error or "https://" in result.error

@@ -78,12 +78,12 @@ class Agent:
                 # Extract command prefix for allowlist
                 cmd_prefix = cmd.split()[0] if cmd else ""
                 if cmd_prefix:
-                    self.permissions.add_to_allowlist(f"bash({cmd_prefix}*)")
-                    ui.print_info(f"Added 'bash({cmd_prefix}*)' to session allowlist")
+                    self.permissions.add_to_allowlist(f"bash({cmd_prefix}:*)")
+                    ui.print_info(f"Added 'bash({cmd_prefix}:*)' to session allowlist")
             elif tool_name in ("write_file", "edit_file"):
                 path = request.tool_input.get("path", "")
-                self.permissions.add_to_allowlist(f"write({path})")
-                ui.print_info(f"Added 'write({path})' to session allowlist")
+                self.permissions.add_to_allowlist(f"{tool_name}({path})")
+                ui.print_info(f"Added '{tool_name}({path})' to session allowlist")
             return True
         else:
             return False

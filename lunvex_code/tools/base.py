@@ -117,6 +117,7 @@ def create_default_registry() -> ToolRegistry:
     )
     from .file_tools import EditFileTool, ReadFileTool, WriteFileTool
     from .search_tools import GlobTool, GrepTool
+    from .web_tools import FetchURLTool
 
     registry = ToolRegistry()
     registry.register(ReadFileTool())
@@ -124,6 +125,7 @@ def create_default_registry() -> ToolRegistry:
     registry.register(EditFileTool())
     registry.register(GlobTool())
     registry.register(GrepTool())
+    registry.register(FetchURLTool())
     registry.register(BashTool())
     registry.register(AnalyzeDependenciesTool())
     registry.register(ListDependenciesTool())

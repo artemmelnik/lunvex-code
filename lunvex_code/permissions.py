@@ -160,6 +160,23 @@ class CompositeRule(PermissionRule):
 class SessionRule(PermissionRule):
     """Rule for session-specific allow/deny lists."""
 
+    DEFAULT_INPUT_KEYS = {
+        "bash": "command",
+        "edit": "path",
+        "edit_file": "path",
+        "fetch_url": "url",
+        "glob": "pattern",
+        "grep": "pattern",
+        "read_file": "path",
+        "write": "path",
+        "write_file": "path",
+    }
+
+    TOOL_ALIASES = {
+        "edit": {"edit_file"},
+        "write": {"write_file", "edit_file"},
+    }
+
     def __init__(self):
         self.allowlist: Set[str] = set()
         self.denylist: Set[str] = set()
@@ -200,6 +217,10 @@ class SessionRule(PermissionRule):
             regex_pattern = "^" + regex_pattern
         return bool(re.search(regex_pattern, text))
 
+    def _resolve_tool_names(self, tool_pattern: str) -> Set[str]:
+        """Expand user-friendly aliases into actual tool names."""
+        return self.TOOL_ALIASES.get(tool_pattern, {tool_pattern})
+
     def check(self, tool_name: str, tool_input: Dict[str, Any]) -> Optional[PermissionLevel]:
         # Check allowlist
         for pattern in self.allowlist:
@@ -209,13 +230,23 @@ class SessionRule(PermissionRule):
 
             tool_pattern, input_key, pattern_str = parsed
 
-            if tool_pattern != tool_name:
+            if tool_name not in self._resolve_tool_names(tool_pattern):
                 continue
 
-            if input_key and pattern_str:
-                value = tool_input.get(input_key, "")
-                if isinstance(value, str) and self._matches_pattern(value, pattern_str):
-                    return PermissionLevel.AUTO
+            default_key = self.DEFAULT_INPUT_KEYS.get(tool_pattern) or self.DEFAULT_INPUT_KEYS.get(tool_name)
+            match_key = input_key if input_key in tool_input else default_key
+
+            if not match_key:
+                continue
+
+            if input_key and pattern_str and input_key not in tool_input:
+                match_pattern = f"{input_key}:{pattern_str}"
+            else:
+                match_pattern = pattern_str
+
+            value = tool_input.get(match_key, "")
+            if isinstance(value, str) and match_pattern and self._matches_pattern(value, match_pattern):
+                return PermissionLevel.AUTO
 
         # Check denylist
         for pattern in self.denylist:
@@ -225,13 +256,23 @@ class SessionRule(PermissionRule):
 
             tool_pattern, input_key, pattern_str = parsed
 
-            if tool_pattern != tool_name:
+            if tool_name not in self._resolve_tool_names(tool_pattern):
                 continue
 
-            if input_key and pattern_str:
-                value = tool_input.get(input_key, "")
-                if isinstance(value, str) and self._matches_pattern(value, pattern_str):
-                    return PermissionLevel.DENY
+            default_key = self.DEFAULT_INPUT_KEYS.get(tool_pattern) or self.DEFAULT_INPUT_KEYS.get(tool_name)
+            match_key = input_key if input_key in tool_input else default_key
+
+            if not match_key:
+                continue
+
+            if input_key and pattern_str and input_key not in tool_input:
+                match_pattern = f"{input_key}:{pattern_str}"
+            else:
+                match_pattern = pattern_str
+
+            value = tool_input.get(match_key, "")
+            if isinstance(value, str) and match_pattern and self._matches_pattern(value, match_pattern):
+                return PermissionLevel.DENY
 
         return None
 
@@ -280,6 +321,7 @@ class PermissionManager:
         self.rules.append(ToolNameRule("read_file", PermissionLevel.AUTO, "Read-only operation"))
         self.rules.append(ToolNameRule("glob", PermissionLevel.AUTO, "Read-only operation"))
         self.rules.append(ToolNameRule("grep", PermissionLevel.AUTO, "Read-only operation"))
+        self.rules.append(ToolNameRule("fetch_url", PermissionLevel.ASK, "External URL access"))
 
         # Safe bash commands (common development commands) - AUTO
         safe_bash_patterns = [
@@ -605,5 +647,7 @@ class PermissionManager:
             return f"Write to file: {tool_input.get('path', '')}"
         elif tool_name == "edit_file":
             return f"Edit file: {tool_input.get('path', '')}"
+        elif tool_name == "fetch_url":
+            return f"Fetch URL: {tool_input.get('url', '')}"
         else:
             return f"{tool_name}: {tool_input}"

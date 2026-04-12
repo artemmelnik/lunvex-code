@@ -126,9 +126,9 @@ class TestPermissionManager:
     def test_session_allowlist(self):
         """Session allowlist should auto-approve matching patterns."""
         manager = PermissionManager()
-        manager.add_to_allowlist("bash(ls:*)")
+        manager.add_to_allowlist("bash(curl:*)")
 
-        request = manager.check_permission("bash", {"command": "ls -la"})
+        request = manager.check_permission("bash", {"command": "curl -s https://example.com"})
         assert request.level == PermissionLevel.AUTO
 
     def test_session_denylist(self):
@@ -138,6 +138,29 @@ class TestPermissionManager:
 
         request = manager.check_permission("bash", {"command": "rm file.txt"})
         assert request.level == PermissionLevel.DENY
+
+    def test_session_allowlist_legacy_bash_pattern_without_colon(self):
+        """Legacy allowlist patterns without explicit input key should still work."""
+        manager = PermissionManager()
+        manager.add_to_allowlist("bash(curl*)")
+
+        request = manager.check_permission("bash", {"command": "curl -s https://example.com"})
+        assert request.level == PermissionLevel.AUTO
+
+    def test_session_allowlist_write_alias_matches_write_and_edit(self):
+        """Write alias should cover both write_file and edit_file path matching."""
+        manager = PermissionManager()
+        manager.add_to_allowlist("write(*.py)")
+
+        write_request = manager.check_permission(
+            "write_file", {"path": "/tmp/test.py", "content": "print('hi')"}
+        )
+        edit_request = manager.check_permission(
+            "edit_file", {"path": "/tmp/test.py", "old_str": "hi", "new_str": "hello"}
+        )
+
+        assert write_request.level == PermissionLevel.AUTO
+        assert edit_request.level == PermissionLevel.AUTO
 
     def test_format_permission_prompt_bash(self):
         """Permission prompt should format bash commands correctly."""
