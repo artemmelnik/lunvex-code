@@ -12,7 +12,7 @@ def test_cli_help():
     
     try:
         result = subprocess.run(
-            [sys.executable, "-m", "deepseek_code.cli", "run", "--help"],
+            [sys.executable, "-m", "lunvex_code.cli", "run", "--help"],
             capture_output=True,
             text=True,
             cwd=os.path.dirname(os.path.abspath(__file__)),
@@ -41,7 +41,7 @@ def test_environment_variable():
     try:
         # Test with animation enabled (default is disabled, so we need to set LUNVEX_ANIMATION)
         os.environ["LUNVEX_ANIMATION"] = "robot"
-        from deepseek_code.ui import get_animation_type
+        from lunvex_code.ui import get_animation_type
         result = get_animation_type()
         if result == "robot":
             print(f"✅ LUNVEX_ANIMATION=robot -> animation enabled ({result})")

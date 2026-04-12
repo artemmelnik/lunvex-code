@@ -3,7 +3,7 @@
 
 import os
 import time
-from deepseek_code import ui
+from lunvex_code import ui
 
 
 def test_animation_disabled():

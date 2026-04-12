@@ -17,9 +17,9 @@ Terminal AI coding assistant for working inside real projects from your shell.
 - keeps conversation history between sessions
 - uses project context from the current working directory
 
-The app uses the DeepSeek API, but with LunVex-specific naming:
+The app uses the DeepSeek API:
 
-- API key env var: `LUNVEX_API_KEY` (or `DEEPSEEK_API_KEY` for backward compatibility)
+- API key env var: `DEEPSEEK_API_KEY` (or `LUNVEX_API_KEY` for backward compatibility)
 - optional project context file: `LUNVEX.md`
 - Python package/module name: `lunvex_code`
 
@@ -39,15 +39,29 @@ pip install -e .[dev]
 ### 2. Set your API key
 
 ```bash
-export LUNVEX_API_KEY=your_key_here
+export DEEPSEEK_API_KEY=your_key_here
 ```
 
 For backward compatibility, you can also use:
 ```bash
-export DEEPSEEK_API_KEY=your_key_here
+export LUNVEX_API_KEY=your_key_here
 ```
 
 You can put that line in `~/.zshrc` if you want it available in every new shell.
+
+## Documentation
+
+- [Animations](docs/ANIMATIONS.md) - Customizable thinking animations
+- [Benchmarks](docs/BENCHMARKS.md) - Performance and cost comparisons
+- [Demo Guide](docs/DEMO_SCREENCAST.md) - How to create demos and screencasts
+- [Publishing Guide](PUBLISHING.md) - How to publish to PyPI
+
+## Project Information
+
+- [Security Policy](SECURITY.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Changelog](CHANGELOG.md)
 
 ### 3. Start the assistant
 
@@ -213,14 +227,14 @@ Run the CLI module directly:
 
 ```bash
 source .venv/bin/activate
-python -m deepseek_code.cli --help
+python -m lunvex_code.cli --help
 ```
 
 ## Repository Layout
 
 ```text
 .
-|-- deepseek_code/       # CLI, agent, context, permissions, tools
+|-- lunvex_code/         # CLI, agent, context, permissions, tools
 |-- tests/               # Test suite
 |-- docs/                # Additional documentation
 |-- examples/            # Example code and configurations
@@ -253,12 +267,12 @@ python -m deepseek_code.cli --help
 Set the API key first:
 
 ```bash
-export LUNVEX_API_KEY=your_key_here
+export DEEPSEEK_API_KEY=your_key_here
 ```
 
 For backward compatibility, you can also use:
 ```bash
-export DEEPSEEK_API_KEY=your_key_here
+export LUNVEX_API_KEY=your_key_here
 ```
 
 ### `lunvex-code: command not found`

@@ -161,14 +161,14 @@ def create_and_run_agent(
     no_animation: bool = False,
 ) -> None:
     """Create an agent and run it with the given task or in interactive mode."""
-    # Check for API key (try LUNVEX_API_KEY first, then DEEPSEEK_API_KEY for backward compatibility)
-    api_key = os.environ.get("LUNVEX_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")
+    # Check for API key (try DEEPSEEK_API_KEY first, then LUNVEX_API_KEY for backward compatibility)
+    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LUNVEX_API_KEY")
     if not api_key:
         console.print(
             "[error]Error: API key environment variable not set.[/error]\n"
             "Get your API key from: https://platform.deepseek.com/\n"
-            "Then set it: export LUNVEX_API_KEY=your_key_here\n"
-            "(or export DEEPSEEK_API_KEY=your_key_here for backward compatibility)"
+            "Then set it: export DEEPSEEK_API_KEY=your_key_here\n"
+            "(or export LUNVEX_API_KEY=your_key_here for backward compatibility)"
         )
         raise typer.Exit(1)
 

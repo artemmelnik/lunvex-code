@@ -44,17 +44,17 @@ class LunVexClient:
         model: str | None = None,
         base_url: str | None = None,
     ):
-        # Try LUNVEX_API_KEY first, then fall back to DEEPSEEK_API_KEY for backward compatibility
-        self.api_key = api_key or os.environ.get("LUNVEX_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")
+        # Try DEEPSEEK_API_KEY first (primary), then fall back to LUNVEX_API_KEY for backward compatibility
+        self.api_key = api_key or os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LUNVEX_API_KEY")
         if not self.api_key:
             raise ValueError(
-                "API key required. Set LUNVEX_API_KEY (or DEEPSEEK_API_KEY for backward compatibility) environment variable "
+                "API key required. Set DEEPSEEK_API_KEY (or LUNVEX_API_KEY for backward compatibility) environment variable "
                 "or pass api_key parameter."
             )
 
-        # Try LUNVEX_ prefixed env vars first, then fall back to DEEPSEEK_ for backward compatibility
-        self.model = model or os.environ.get("LUNVEX_MODEL") or os.environ.get("DEEPSEEK_MODEL", self.DEFAULT_MODEL)
-        self.base_url = base_url or os.environ.get("LUNVEX_BASE_URL") or os.environ.get("DEEPSEEK_BASE_URL", self.DEFAULT_BASE_URL)
+        # Try DEEPSEEK_ prefixed env vars first (primary), then fall back to LUNVEX_ for backward compatibility
+        self.model = model or os.environ.get("DEEPSEEK_MODEL") or os.environ.get("LUNVEX_MODEL", self.DEFAULT_MODEL)
+        self.base_url = base_url or os.environ.get("DEEPSEEK_BASE_URL") or os.environ.get("LUNVEX_BASE_URL", self.DEFAULT_BASE_URL)
 
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.total_tokens_used = 0

@@ -81,23 +81,23 @@ This guide helps you diagnose and fix common issues with LunVex Code.
 
 ## Configuration Problems
 
-### "LUNVEX_API_KEY environment variable not set"
+### "DEEPSEEK_API_KEY environment variable not set"
 **Problem:** API key is missing.
 
 **Solutions:**
 1. **Set environment variable:**
    ```bash
-   export LUNVEX_API_KEY=your_key_here
+   export DEEPSEEK_API_KEY=your_key_here
    ```
 
 2. **Create .env file:**
    ```bash
-   echo "LUNVEX_API_KEY=your_key_here" > .env
+   echo "DEEPSEEK_API_KEY=your_key_here" > .env
    ```
 
 3. **Check if set:**
    ```bash
-   echo $LUNVEX_API_KEY
+   echo $DEEPSEEK_API_KEY
    ```
 
 ### Invalid API key
@@ -111,7 +111,7 @@ This guide helps you diagnose and fix common issues with LunVex Code.
 2. **Test API key:**
    ```bash
    curl -X POST https://api.deepseek.com/v1/chat/completions \
-     -H "Authorization: Bearer $LUNVEX_API_KEY" \
+     -H "Authorization: Bearer $DEEPSEEK_API_KEY" \
      -H "Content-Type: application/json" \
      -d '{"model": "deepseek-chat", "messages": [{"role": "user", "content": "Hello"}]}'
    ```
@@ -457,10 +457,10 @@ ls -la ~/.lunvex-code/logs/
 Test components individually:
 ```bash
 # Test file reading
-python -c "from deepseek_code.tools.file_tools import ReadFileTool; t=ReadFileTool(); print(t.execute(path='README.md'))"
+python -c "from lunvex_code.tools.file_tools import ReadFileTool; t=ReadFileTool(); print(t.execute(path='README.md'))"
 
 # Test permission system
-python -c "from deepseek_code.permissions import PermissionManager; m=PermissionManager(); print(m.check_permission('bash', {'command': 'ls -la'}))"
+python -c "from lunvex_code.permissions import PermissionManager; m=PermissionManager(); print(m.check_permission('bash', {'command': 'ls -la'}))"
 ```
 
 ### Environment Inspection
@@ -485,7 +485,7 @@ curl -I https://api.deepseek.com
 
 # Test with API key
 curl -X POST https://api.deepseek.com/v1/chat/completions \
-  -H "Authorization: Bearer $LUNVEX_API_KEY" \
+  -H "Authorization: Bearer $DEEPSEEK_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model": "deepseek-chat", "messages": [{"role": "user", "content": "test"}]}' \
   -w "\nTime: %{time_total}s\n"

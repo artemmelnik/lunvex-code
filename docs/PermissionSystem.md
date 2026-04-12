@@ -19,7 +19,7 @@ The LunVex Code permission system has been refactored to provide a highly extens
 Matches tools by exact name.
 
 ```python
-from deepseek_code.permissions import ToolNameRule, PermissionLevel
+from lunvex_code.permissions import ToolNameRule, PermissionLevel
 
 rule = ToolNameRule(
     "deploy_tool",
@@ -33,7 +33,7 @@ Matches tools by regex pattern.
 
 ```python
 import re
-from deepseek_code.permissions import ToolNamePatternRule, PermissionLevel
+from lunvex_code.permissions import ToolNamePatternRule, PermissionLevel
 
 pattern = re.compile(r"^api_.*")
 rule = ToolNamePatternRule(
@@ -48,7 +48,7 @@ Matches tool input values by regex pattern.
 
 ```python
 import re
-from deepseek_code.permissions import InputPatternRule, PermissionLevel
+from lunvex_code.permissions import InputPatternRule, PermissionLevel
 
 pattern = re.compile(r".*\.env$", re.IGNORECASE)
 rule = InputPatternRule(
@@ -64,7 +64,7 @@ rule = InputPatternRule(
 Combines multiple rules with logical operators (AND/OR).
 
 ```python
-from deepseek_code.permissions import CompositeRule, InputPatternRule, PermissionLevel
+from lunvex_code.permissions import CompositeRule, InputPatternRule, PermissionLevel
 import re
 
 rule = CompositeRule([
@@ -99,7 +99,7 @@ manager.add_to_denylist("bash(rm:*)")    # Block rm commands
 ### Basic Usage
 
 ```python
-from deepseek_code.permissions import PermissionManager
+from lunvex_code.permissions import PermissionManager
 
 # Create permission manager
 manager = PermissionManager()
@@ -121,7 +121,7 @@ elif request.level == PermissionLevel.DENY:
 ### Adding Custom Rules
 
 ```python
-from deepseek_code.permissions import PermissionManager, ToolNameRule, PermissionLevel
+from lunvex_code.permissions import PermissionManager, ToolNameRule, PermissionLevel
 
 manager = PermissionManager()
 
@@ -140,7 +140,7 @@ manager.add_rule(custom_rule)
 
 ```python
 import re
-from deepseek_code.permissions import (
+from lunvex_code.permissions import (
     PermissionManager,
     CompositeRule,
     InputPatternRule,
@@ -170,7 +170,7 @@ manager.add_rule(business_hours_rule)
 
 ```python
 from abc import ABC, abstractmethod
-from deepseek_code.permissions import PermissionRule, PermissionLevel
+from lunvex_code.permissions import PermissionRule, PermissionLevel
 
 class ExternalSystemRule(PermissionRule, ABC):
     """Base class for rules that integrate with external systems."""
@@ -244,7 +244,7 @@ Rules are evaluated in the order they were added to the PermissionManager. The f
 ### Programmatic Configuration
 
 ```python
-from deepseek_code.permissions import PermissionManager
+from lunvex_code.permissions import PermissionManager
 
 # Create with different modes
 manager1 = PermissionManager()                    # Default mode
@@ -294,7 +294,7 @@ The new system is fully backward compatible. Existing code using `PermissionMana
 
 **After (new system):**
 ```python
-from deepseek_code.permissions import PermissionManager, InputPatternRule
+from lunvex_code.permissions import PermissionManager, InputPatternRule
 import re
 
 manager = PermissionManager()
@@ -315,7 +315,7 @@ manager.add_rule(rule)
 ### Creating Custom Rule Classes
 
 ```python
-from deepseek_code.permissions import PermissionRule, PermissionLevel
+from lunvex_code.permissions import PermissionRule, PermissionLevel
 from typing import Optional, Dict, Any
 
 class TimeOfDayRule(PermissionRule):

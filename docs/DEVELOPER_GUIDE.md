@@ -29,14 +29,14 @@ pre-commit install
 ### Configuration
 Create a `.env` file in the project root:
 ```bash
-LUNVEX_API_KEY=your_api_key_here
+DEEPSEEK_API_KEY=your_api_key_here
 ```
 
 ## Project Structure
 
 ```
 lunvex-code/
-├── deepseek_code/          # Main package
+├── lunvex_code/          # Main package
 │   ├── __init__.py        # Package exports and constants
 │   ├── cli.py             # Command-line interface
 │   ├── agent.py           # Core agent logic
@@ -75,10 +75,10 @@ User Input → CLI → Agent → LLM → Tool Calls → Permission Check → Exe
 ## Creating Custom Tools
 
 ### Tool Base Class
-All tools inherit from `deepseek_code.tools.base.Tool`:
+All tools inherit from `lunvex_code.tools.base.Tool`:
 
 ```python
-from deepseek_code.tools.base import Tool, ToolResult
+from lunvex_code.tools.base import Tool, ToolResult
 
 class MyCustomTool(Tool):
     name = "my_tool"
@@ -107,10 +107,10 @@ class MyCustomTool(Tool):
 ```
 
 ### Tool Registration
-Tools are automatically registered when imported. Ensure your tool is imported in `deepseek_code/tools/__init__.py`:
+Tools are automatically registered when imported. Ensure your tool is imported in `lunvex_code/tools/__init__.py`:
 
 ```python
-# In deepseek_code/tools/__init__.py
+# In lunvex_code/tools/__init__.py
 from .my_custom_tool import MyCustomTool
 
 __all__ = [
@@ -121,7 +121,7 @@ __all__ = [
 
 ### Example: Simple Calculator Tool
 ```python
-from deepseek_code.tools.base import Tool, ToolResult
+from lunvex_code.tools.base import Tool, ToolResult
 
 class CalculatorTool(Tool):
     name = "calculator"
@@ -182,7 +182,7 @@ The permission system supports several rule types:
 
 ### Creating Custom Permission Rules
 ```python
-from deepseek_code.permissions import PermissionRule, PermissionLevel
+from lunvex_code.permissions import PermissionRule, PermissionLevel
 from typing import Optional, Dict, Any
 
 class TimeBasedRule(PermissionRule):
@@ -220,7 +220,7 @@ class TimeBasedRule(PermissionRule):
 
 ### Registering Custom Rules
 ```python
-from deepseek_code.permissions import PermissionManager
+from lunvex_code.permissions import PermissionManager
 
 manager = PermissionManager()
 custom_rule = TimeBasedRule(business_hours_start=9, business_hours_end=17)
@@ -231,7 +231,7 @@ manager.add_rule(custom_rule)
 
 ### Basic Usage
 ```python
-from deepseek_code.llm import LunVexClient
+from lunvex_code.llm import LunVexClient
 
 client = LunVexClient(api_key="your_api_key")
 
@@ -249,7 +249,7 @@ response = client.complete_with_tools(
 
 ### Customizing LLM Behavior
 ```python
-from deepseek_code.llm import LunVexClient
+from lunvex_code.llm import LunVexClient
 
 client = LunVexClient(
     api_key="your_api_key",
@@ -272,7 +272,7 @@ pytest
 pytest tests/test_permissions.py
 
 # Run with coverage
-pytest --cov=deepseek_code
+pytest --cov=lunvex_code
 
 # Run with verbose output
 pytest -v
@@ -284,7 +284,7 @@ pytest tests/test_tools.py::TestReadFileTool::test_read_file_success
 ### Writing Tests
 ```python
 import pytest
-from deepseek_code.tools.file_tools import ReadFileTool
+from lunvex_code.tools.file_tools import ReadFileTool
 
 class TestMyCustomTool:
     def test_tool_success(self):
@@ -315,7 +315,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 class TestLLMClient:
-    @patch('deepseek_code.llm.openai.OpenAI')
+    @patch('lunvex_code.llm.openai.OpenAI')
     def test_completion(self, mock_openai):
         # Setup mock
         mock_response = Mock()
@@ -339,7 +339,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Or configure specific logger
-logger = logging.getLogger("deepseek_code")
+logger = logging.getLogger("lunvex_code")
 logger.setLevel(logging.DEBUG)
 ```
 
@@ -363,25 +363,25 @@ from IPython import embed; embed()
 ### Formatting
 ```bash
 # Format code with black
-black deepseek_code tests
+black lunvex_code tests
 
 # Sort imports with isort
-isort deepseek_code tests
+isort lunvex_code tests
 
 # Check formatting
-black --check deepseek_code tests
+black --check lunvex_code tests
 ```
 
 ### Linting
 ```bash
 # Run ruff linter
-ruff check deepseek_code tests
+ruff check lunvex_code tests
 
 # Fix linting issues
-ruff check --fix deepseek_code tests
+ruff check --fix lunvex_code tests
 
 # Type checking with mypy (if configured)
-mypy deepseek_code
+mypy lunvex_code
 ```
 
 ### Pre-commit Hooks
@@ -477,7 +477,7 @@ Use conventional commits:
 ```python
 import cProfile
 import pstats
-from deepseek_code.cli import main
+from lunvex_code.cli import main
 
 # Profile CLI execution
 profiler = cProfile.Profile()
@@ -568,7 +568,7 @@ subprocess.run(command, env=env, ...)
    - Run `pip install -e .[dev]`
 
 2. **API Key Issues**
-   - Set `LUNVEX_API_KEY` environment variable
+   - Set `DEEPSEEK_API_KEY` environment variable
    - Check API key validity
    - Verify network connectivity
 
@@ -607,7 +607,7 @@ class MyPlugin:
 
 ### Custom LLM Providers
 ```python
-from deepseek_code.llm import BaseLLMClient
+from lunvex_code.llm import BaseLLMClient
 
 class CustomLLMClient(BaseLLMClient):
     def complete(self, messages, tools=None):
@@ -621,7 +621,7 @@ class CustomLLMClient(BaseLLMClient):
 
 ### Event System (Future)
 ```python
-from deepseek_code.events import EventBus
+from lunvex_code.events import EventBus
 
 # Subscribe to events
 event_bus.subscribe("tool_executed", handle_tool_execution)

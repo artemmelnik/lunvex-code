@@ -8,7 +8,7 @@ This document describes the public API of LunVex Code for developers who want to
 
 ## Core Modules
 
-### `deepseek_code.cli`
+### `lunvex_code.cli`
 Command-line interface entry point.
 
 #### `main()`
@@ -30,7 +30,7 @@ Commands:
 """
 ```
 
-### `deepseek_code.agent`
+### `lunvex_code.agent`
 Core agent implementation.
 
 #### `Agent`
@@ -82,7 +82,7 @@ class AgentConfig:
     verbose: bool = False
 ```
 
-### `deepseek_code.llm`
+### `lunvex_code.llm`
 LLM client interface.
 
 #### `LunVexClient`
@@ -103,7 +103,7 @@ class LunVexClient:
         Initialize DeepSeek client.
         
         Args:
-            api_key: API key (defaults to LUNVEX_API_KEY env var)
+            api_key: API key (defaults to DEEPSEEK_API_KEY env var)
             model: Model to use
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
@@ -160,7 +160,7 @@ class ToolCall:
     arguments: Dict[str, Any]
 ```
 
-### `deepseek_code.permissions`
+### `lunvex_code.permissions`
 Permission system.
 
 #### `PermissionManager`
@@ -251,7 +251,7 @@ class PermissionRule(ABC):
         """Get reason for the decision."""
 ```
 
-### `deepseek_code.tools`
+### `lunvex_code.tools`
 Tool system.
 
 #### `Tool` (Abstract Base Class)
@@ -307,7 +307,7 @@ def create_default_registry() -> ToolRegistry:
     """Create registry with default tools."""
 ```
 
-### `deepseek_code.context`
+### `lunvex_code.context`
 Context management.
 
 #### `ProjectContext`
@@ -349,7 +349,7 @@ def build_system_prompt(context: ProjectContext) -> str:
     """
 ```
 
-### `deepseek_code.conversation`
+### `lunvex_code.conversation`
 Conversation management.
 
 #### `ConversationHistory`
@@ -379,7 +379,7 @@ class ConversationHistory:
         """Load conversation from disk."""
 ```
 
-### `deepseek_code.ui`
+### `lunvex_code.ui`
 User interface.
 
 #### `print_message()`
@@ -537,7 +537,7 @@ The system includes automatic retry for:
 ### Environment Variables
 ```python
 # Required
-LUNVEX_API_KEY: str
+DEEPSEEK_API_KEY: str
 
 # Optional
 LUNVEX_DEBUG: bool = False
@@ -553,9 +553,9 @@ LUNVEX_MAX_TOKENS: int = 2000
 
 ### Basic Usage
 ```python
-from deepseek_code.llm import LunVexClient
-from deepseek_code.context import get_project_context
-from deepseek_code.agent import Agent, AgentConfig
+from lunvex_code.llm import LunVexClient
+from lunvex_code.context import get_project_context
+from lunvex_code.agent import Agent, AgentConfig
 
 # Initialize components
 client = LunVexClient()
@@ -572,8 +572,8 @@ print(response)
 
 ### Custom Tool Integration
 ```python
-from deepseek_code.tools.base import Tool, ToolResult
-from deepseek_code.tools.base import create_default_registry
+from lunvex_code.tools.base import Tool, ToolResult
+from lunvex_code.tools.base import create_default_registry
 
 class CustomTool(Tool):
     name = "custom_tool"
@@ -594,7 +594,7 @@ registry.register(CustomTool())
 
 ### Custom Permission Rules
 ```python
-from deepseek_code.permissions import PermissionManager, PermissionRule, PermissionLevel
+from lunvex_code.permissions import PermissionManager, PermissionRule, PermissionLevel
 
 class TimeBasedRule(PermissionRule):
     def check(self, tool_name, tool_input):

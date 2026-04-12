@@ -37,28 +37,28 @@ LunVex Code follows a modular architecture with clear separation of concerns:
 ## Core Components
 
 ### 1. CLI (Command Line Interface)
-**File:** `deepseek_code/cli.py`
+**File:** `lunvex_code/cli.py`
 - Entry point for the application using Typer
 - Handles command parsing and routing
 - Manages interactive REPL mode and one-shot tasks
 - Supports different modes: default, trust, YOLO
 
 ### 2. Agent
-**File:** `deepseek_code/agent.py`
+**File:** `lunvex_code/agent.py`
 - Orchestrates the interaction between LLM and tools
 - Manages conversation flow and turn limits
 - Handles tool execution with permission checks
 - Maintains conversation state and history
 
 ### 3. LLM Client
-**File:** `deepseek_code/llm.py`
+**File:** `lunvex_code/llm.py`
 - Interface to LunVex API (OpenAI-compatible)
 - Handles API communication, error handling, and retries
 - Manages token limits and response parsing
 - Supports tool calling with function definitions
 
 ### 4. Permission System
-**File:** `deepseek_code/permissions.py`
+**File:** `lunvex_code/permissions.py`
 - Extensible rule-based permission management
 - Three permission levels: AUTO, ASK, DENY
 - Default rules for common operations
@@ -66,7 +66,7 @@ LunVex Code follows a modular architecture with clear separation of concerns:
 - Support for custom permission rules
 
 ### 5. Tools System
-**Directory:** `deepseek_code/tools/`
+**Directory:** `lunvex_code/tools/`
 - **Base:** `base.py` - Abstract base class for tools
 - **File Operations:** `file_tools.py` - read_file, write_file, edit_file
 - **Search Operations:** `search_tools.py` - glob, grep
@@ -74,21 +74,21 @@ LunVex Code follows a modular architecture with clear separation of concerns:
 - **Tool Registry:** Manages tool registration and discovery
 
 ### 6. Context Management
-**File:** `deepseek_code/context.py`
+**File:** `lunvex_code/context.py`
 - Detects project root based on markers (.git, LUNVEX.md, etc.)
 - Loads and manages project context from LUNVEX.md
 - Builds system prompts with project-specific information
 - Handles working directory and project boundaries
 
 ### 7. User Interface
-**File:** `deepseek_code/ui.py`
+**File:** `lunvex_code/ui.py`
 - Rich terminal output with formatting
 - Permission prompts and user confirmation
 - Progress indicators and status messages
 - Color-coded output for different message types
 
 ### 8. Conversation Management
-**File:** `deepseek_code/conversation.py`
+**File:** `lunvex_code/conversation.py`
 - Maintains conversation history between sessions
 - Serializes/deserializes conversation state
 - Manages message history for LLM context
@@ -137,7 +137,7 @@ Tool Call → Permission Check → Input Validation → Execution → Result For
 ## Configuration
 
 ### Environment Variables
-- `LUNVEX_API_KEY` - API key for DeepSeek
+- `DEEPSEEK_API_KEY` - API key for DeepSeek
 - (Optional) Project-specific settings in `LUNVEX.md`
 
 ### Configuration Files

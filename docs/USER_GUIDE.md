@@ -27,7 +27,7 @@ pip install -e .[dev]
 
 ### 2. Set API Key
 ```bash
-export LUNVEX_API_KEY=your_key_here
+export DEEPSEEK_API_KEY=your_key_here
 # Add to ~/.bashrc or ~/.zshrc for persistence
 ```
 
@@ -367,7 +367,7 @@ LunVex automatically detects project roots by looking for:
 ### Environment Variables
 
 #### Required
-- `LUNVEX_API_KEY`: Your DeepSeek API key
+- `DEEPSEEK_API_KEY`: Your DeepSeek API key
 
 #### Optional
 - `LUNVEX_DEBUG`: Enable debug logging
@@ -392,13 +392,13 @@ theme: dark
 
 ### Common Issues
 
-#### "LUNVEX_API_KEY environment variable not set"
+#### "DEEPSEEK_API_KEY environment variable not set"
 ```bash
 # Set the API key
-export LUNVEX_API_KEY=your_key_here
+export DEEPSEEK_API_KEY=your_key_here
 
 # Verify it's set
-echo $LUNVEX_API_KEY
+echo $DEEPSEEK_API_KEY
 ```
 
 #### "lunvex-code: command not found"

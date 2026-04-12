@@ -33,15 +33,15 @@ jobs:
           
       - name: Run flake8
         run: |
-          flake8 deepseek_code tests --max-line-length=100 --ignore=E501,W503
+          flake8 lunvex_code tests --max-line-length=100 --ignore=E501,W503
           
       - name: Run black check
         run: |
-          black --check deepseek_code tests
+          black --check lunvex_code tests
           
       - name: Run isort check
         run: |
-          isort --check-only deepseek_code tests
+          isort --check-only lunvex_code tests
 
   type-check:
     name: Type Check
@@ -63,7 +63,7 @@ jobs:
           
       - name: Run mypy
         run: |
-          mypy deepseek_code --ignore-missing-imports
+          mypy lunvex_code --ignore-missing-imports
 
   security:
     name: Security Check
@@ -110,7 +110,7 @@ jobs:
           
       - name: Run tests
         run: |
-          pytest tests/ -v --cov=deepseek_code --cov-report=xml
+          pytest tests/ -v --cov=lunvex_code --cov-report=xml
           
       - name: Upload coverage
         uses: codecov/codecov-action@v4

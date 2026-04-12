@@ -3,8 +3,8 @@
 
 import json
 from pathlib import Path
-from deepseek_code.dependencies.analyzer import DependencyAnalyzer
-from deepseek_code.dependencies.security_fixed import FixedVulnerabilityScanner
+from lunvex_code.dependencies.analyzer import DependencyAnalyzer
+from lunvex_code.dependencies.security_fixed import FixedVulnerabilityScanner
 
 
 def main():
@@ -55,7 +55,7 @@ def main():
     print("🔄 Comparison with old scanner:")
     
     try:
-        from deepseek_code.dependencies.security import VulnerabilityScanner
+        from lunvex_code.dependencies.security import VulnerabilityScanner
         
         old_scanner = VulnerabilityScanner()
         old_result = old_scanner.scan_dependencies(deps)

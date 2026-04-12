@@ -8,7 +8,7 @@ with the LunVex Code permission system.
 
 import re
 
-from deepseek_code.permissions import (
+from lunvex_code.permissions import (
     CompositeRule,
     InputPatternRule,
     PermissionLevel,
