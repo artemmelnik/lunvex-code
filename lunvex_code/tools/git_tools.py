@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from rich.console import Console
+
 from .base import Tool, ToolResult
+from .git_colors import git_colorizer
 
 
 @dataclass
@@ -109,7 +112,8 @@ class GitToolBase(Tool):
                 command=" ".join(["git"] + args)
             )
     
-    def _format_output(self, git_result: GitResult, format_type: str = "text") -> str:
+    def _format_output(self, git_result: GitResult, format_type: str = "text", 
+                      tool_name: str = "", **kwargs) -> str:
         """Format Git result for output."""
         if format_type == "json":
             return json.dumps(git_result.to_dict(), indent=2, ensure_ascii=False)
@@ -122,7 +126,21 @@ class GitToolBase(Tool):
             return error_msg
         
         if git_result.output:
-            return git_result.output
+            # Apply color highlighting based on tool type
+            if tool_name == "git_diff":
+                return git_colorizer.colorize_diff(git_result.output)
+            elif tool_name == "git_status":
+                short = kwargs.get('short', False)
+                return git_colorizer.colorize_status(git_result.output, short)
+            elif tool_name == "git_branch":
+                return git_colorizer.colorize_branch(git_result.output)
+            elif tool_name == "git_log":
+                oneline = kwargs.get('oneline', False)
+                return git_colorizer.colorize_log(git_result.output, oneline)
+            elif tool_name == "git_show":
+                return git_colorizer.colorize_show(git_result.output)
+            else:
+                return git_result.output
         
         return "Command executed successfully (no output)"
 
@@ -173,7 +191,7 @@ class GitStatusTool(GitToolBase):
             args.append("--branch")
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name, short=short)
         
         return ToolResult(
             success=git_result.success,
@@ -243,7 +261,7 @@ class GitDiffTool(GitToolBase):
             args.append(file)
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
@@ -328,7 +346,7 @@ class GitLogTool(GitToolBase):
             args.extend(["--grep", grep])
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name, oneline=oneline)
         
         return ToolResult(
             success=git_result.success,
@@ -382,7 +400,7 @@ class GitShowTool(GitToolBase):
             args.append(object)
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
@@ -472,7 +490,7 @@ class GitBranchTool(GitToolBase):
                 args.append("-v")
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
@@ -542,7 +560,7 @@ class GitAddTool(GitToolBase):
             args.append(".")
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
@@ -614,7 +632,7 @@ class GitCommitTool(GitToolBase):
         args.extend(["-m", message])
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
@@ -698,7 +716,7 @@ class GitPushTool(GitToolBase):
             args.append(remote)
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
@@ -780,7 +798,7 @@ class GitPullTool(GitToolBase):
             args.append(remote)
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
@@ -889,7 +907,7 @@ class GitStashTool(GitToolBase):
             args.append("--include-untracked")
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
@@ -971,7 +989,7 @@ class GitCheckoutTool(GitToolBase):
             args.append(file)
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
@@ -1069,7 +1087,7 @@ class GitMergeTool(GitToolBase):
             args.append(branch)
             git_result = self._run_git_command(args)
         
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
@@ -1142,7 +1160,7 @@ class GitFetchTool(GitToolBase):
             args.append(remote)
         
         git_result = self._run_git_command(args)
-        output = self._format_output(git_result, format)
+        output = self._format_output(git_result, format, tool_name=self.name)
         
         return ToolResult(
             success=git_result.success,
