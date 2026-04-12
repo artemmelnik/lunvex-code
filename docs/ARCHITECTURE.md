@@ -71,6 +71,7 @@ LunVex Code follows a modular architecture with clear separation of concerns:
 - **File Operations:** `file_tools.py` - read_file, write_file, edit_file
 - **Search Operations:** `search_tools.py` - glob, grep
 - **Shell Operations:** `bash_tool.py` - bash command execution
+- **Cache Operations:** `cache_tools.py` - cache management tools
 - **Tool Registry:** Manages tool registration and discovery
 
 ### 6. Context Management
@@ -87,7 +88,15 @@ LunVex Code follows a modular architecture with clear separation of concerns:
 - Progress indicators and status messages
 - Color-coded output for different message types
 
-### 8. Conversation Management
+### 8. Cache System
+**File:** `lunvex_code/cache.py`
+- LRU cache for file contents with TTL expiration
+- Automatic invalidation when files are modified
+- Metadata validation for cache consistency
+- Configurable via environment variables or CLI
+- Global cache instance with statistics tracking
+
+### 9. Conversation Management
 **File:** `lunvex_code/conversation.py`
 - Maintains conversation history between sessions
 - Serializes/deserializes conversation state

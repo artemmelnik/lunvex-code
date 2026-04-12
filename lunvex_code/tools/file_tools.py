@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from ..cache import read_file_with_cache
 from .base import Tool, ToolResult
 
 
@@ -41,27 +42,28 @@ class ReadFileTool(Tool):
             if not file_path.is_file():
                 return ToolResult(success=False, output="", error=f"Not a file: {path}")
 
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-                lines = f.readlines()
-
-            # Apply offset (convert to 0-indexed)
+            # Read file with caching
+            content, from_cache = read_file_with_cache(file_path, limit, offset)
+            
+            # Split into lines for formatting
+            lines = content.splitlines(keepends=True)
+            
+            # Apply offset (convert to 0-indexed) - already done in cache function
             start_idx = max(0, offset - 1)
-            lines = lines[start_idx:]
-
-            # Apply limit
-            if limit and limit > 0:
-                lines = lines[:limit]
-
+            
             # Format with line numbers
             content_lines = []
             for i, line in enumerate(lines, start=start_idx + 1):
                 content_lines.append(f"{i:6d}\t{line.rstrip()}")
 
-            content = "\n".join(content_lines)
-
+            formatted_content = "\n".join(content_lines)
+            
+            # Add cache indicator to output
+            cache_indicator = " [cached]" if from_cache else ""
+            
             return ToolResult(
                 success=True,
-                output=f"Contents of {path}:\n{content}" if content else f"{path} is empty",
+                output=f"Contents of {path}{cache_indicator}:\n{formatted_content}" if formatted_content else f"{path} is empty{cache_indicator}",
             )
 
         except PermissionError:
@@ -102,6 +104,11 @@ class WriteFileTool(Tool):
             # Write the file
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
+
+            # Invalidate cache for this file
+            from ..cache import get_file_cache
+            cache = get_file_cache()
+            cache.invalidate(file_path)
 
             return ToolResult(
                 success=True,
@@ -177,6 +184,11 @@ class EditFileTool(Tool):
             # Write back
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
+
+            # Invalidate cache for this file
+            from ..cache import get_file_cache
+            cache = get_file_cache()
+            cache.invalidate(file_path)
 
             # Show what changed
             lines_changed = old_str.count("\n") + 1

@@ -81,9 +81,11 @@ class Agent:
                     self.permissions.add_to_allowlist(f"bash({cmd_prefix}:*)")
                     ui.print_info(f"Added 'bash({cmd_prefix}:*)' to session allowlist")
             elif tool_name in ("write_file", "edit_file"):
-                path = request.tool_input.get("path", "")
-                self.permissions.add_to_allowlist(f"{tool_name}({path})")
-                ui.print_info(f"Added '{tool_name}({path})' to session allowlist")
+                # "always" for file modifications should apply at the tool level,
+                # not just to the exact file path that happened to trigger the prompt.
+                pattern = f"{tool_name}(*)"
+                self.permissions.add_to_allowlist(pattern)
+                ui.print_info(f"Added '{pattern}' to session allowlist")
             return True
         else:
             return False
@@ -94,6 +96,17 @@ class Agent:
 
         if not tool:
             return f"Error: Unknown tool '{tool_call.name}'"
+
+        if set(tool_call.arguments.keys()) == {"raw"}:
+            raw_args = str(tool_call.arguments.get("raw", "")).strip()
+            raw_preview = raw_args if len(raw_args) <= 200 else raw_args[:200] + "..."
+            expected_args = ", ".join(tool.parameters.keys())
+            return (
+                f"Error: Invalid tool arguments for '{tool_call.name}'. "
+                f"The model sent malformed JSON instead of tool parameters. "
+                f"Expected keys: {expected_args}. "
+                f"Raw arguments: {raw_preview}"
+            )
 
         # Check permissions
         perm_request = self.permissions.check_permission(tool_call.name, tool_call.arguments)

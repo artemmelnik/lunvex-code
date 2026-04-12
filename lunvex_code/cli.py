@@ -15,15 +15,21 @@ from . import (
     APP_CONTEXT_FILENAME,
     APP_DISPLAY_NAME,
     APP_STATE_DIRNAME,
+    CACHE_MAX_SIZE,
+    CACHE_TTL_SECONDS,
     __version__,
     ui,
 )
 from .agent import Agent, AgentConfig
+from .cache import configure_cache
 from .context import get_project_context
 from .llm import LunVexClient
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure cache from environment variables
+configure_cache(max_size=CACHE_MAX_SIZE, ttl_seconds=CACHE_TTL_SECONDS)
 
 app = typer.Typer(
     name=APP_COMMAND_NAME,
@@ -340,6 +346,53 @@ def history(
 def version() -> None:
     """Show version information."""
     console.print(f"{APP_DISPLAY_NAME} v{__version__}")
+
+
+@app.command()
+def cache_stats() -> None:
+    """Show file cache statistics."""
+    from .cache import get_file_cache
+    
+    cache = get_file_cache()
+    stats = cache.get_stats()
+    
+    console.print("[bold]File Cache Statistics:[/bold]")
+    console.print(f"  Size: {stats['size']}/{stats['max_size']} files")
+    console.print(f"  Hits: {stats['hits']}")
+    console.print(f"  Misses: {stats['misses']}")
+    console.print(f"  Hit Rate: {stats['hit_rate']}")
+    console.print(f"  TTL: {stats['ttl_seconds']} seconds")
+
+
+@app.command()
+def clear_cache() -> None:
+    """Clear all entries from the file cache."""
+    from .cache import get_file_cache
+    
+    cache = get_file_cache()
+    cache.clear()
+    
+    console.print("[green]✓[/green] File cache cleared successfully.")
+
+
+@app.command()
+def configure_cache(
+    max_size: int = typer.Option(100, help="Maximum number of files to cache"),
+    ttl_seconds: int = typer.Option(300, help="Time-to-live for cache entries in seconds"),
+) -> None:
+    """Configure file cache settings."""
+    from .cache import configure_cache
+    
+    if max_size <= 0:
+        console.print("[red]Error:[/red] max_size must be positive")
+        raise typer.Exit(1)
+    
+    if ttl_seconds <= 0:
+        console.print("[red]Error:[/red] ttl_seconds must be positive")
+        raise typer.Exit(1)
+    
+    configure_cache(max_size=max_size, ttl_seconds=ttl_seconds)
+    console.print(f"[green]✓[/green] Cache configured: max_size={max_size}, ttl_seconds={ttl_seconds}")
 
 
 def main():

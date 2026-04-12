@@ -103,6 +103,12 @@ class ToolRegistry:
 def create_default_registry() -> ToolRegistry:
     """Create a registry with all default tools."""
     from .bash_tool import BashTool
+    from .cache_tools import (
+        CacheStatsTool,
+        ClearCacheTool,
+        ConfigureCacheTool,
+        InvalidateCacheTool,
+    )
     from .dependency_tools import (
         AddDependencyTool,
         AnalyzeDependenciesTool,
@@ -152,6 +158,10 @@ def create_default_registry() -> ToolRegistry:
     registry.register(UpgradeDependenciesTool())
     registry.register(ScanVulnerabilitiesTool())
     registry.register(VisualizeDependenciesTool())
+    registry.register(CacheStatsTool())
+    registry.register(ClearCacheTool())
+    registry.register(ConfigureCacheTool())
+    registry.register(InvalidateCacheTool())
     registry.register(GitStatusTool())
     registry.register(GitDiffTool())
     registry.register(GitLogTool())

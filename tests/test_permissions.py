@@ -162,6 +162,26 @@ class TestPermissionManager:
         assert write_request.level == PermissionLevel.AUTO
         assert edit_request.level == PermissionLevel.AUTO
 
+    def test_session_allowlist_write_file_star_matches_any_path(self):
+        """Tool-wide write_file allowlist should auto-approve any file path."""
+        manager = PermissionManager()
+        manager.add_to_allowlist("write_file(*)")
+
+        request = manager.check_permission(
+            "write_file", {"path": "/tmp/anything.txt", "content": "..."}
+        )
+        assert request.level == PermissionLevel.AUTO
+
+    def test_session_allowlist_edit_file_star_matches_any_path(self):
+        """Tool-wide edit_file allowlist should auto-approve any file path."""
+        manager = PermissionManager()
+        manager.add_to_allowlist("edit_file(*)")
+
+        request = manager.check_permission(
+            "edit_file", {"path": "/tmp/anything.txt", "old_str": "a", "new_str": "b"}
+        )
+        assert request.level == PermissionLevel.AUTO
+
     def test_format_permission_prompt_bash(self):
         """Permission prompt should format bash commands correctly."""
         manager = PermissionManager()

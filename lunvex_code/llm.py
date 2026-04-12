@@ -3,6 +3,7 @@
 import json
 import os
 from dataclasses import dataclass, field
+from json import JSONDecodeError
 from typing import Any, Callable
 
 from openai import OpenAI
@@ -56,6 +57,55 @@ class LunVexClient:
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.total_tokens_used = 0
 
+    def _normalize_tool_arguments(self, raw_arguments: str) -> dict[str, Any]:
+        """Best-effort parsing for tool arguments emitted by the model."""
+        candidate_strings: list[str] = []
+        stripped = raw_arguments.strip()
+
+        if stripped:
+            candidate_strings.append(stripped)
+
+            # Some models wrap tool arguments in fenced code blocks.
+            if stripped.startswith("```"):
+                fence_lines = stripped.splitlines()
+                if len(fence_lines) >= 3:
+                    fenced_body = "\n".join(fence_lines[1:-1]).strip()
+                    if fenced_body:
+                        candidate_strings.append(fenced_body)
+
+            # Some responses include prose around the JSON payload; recover the object body.
+            json_start = stripped.find("{")
+            json_end = stripped.rfind("}")
+            if json_start != -1 and json_end != -1 and json_end > json_start:
+                embedded_object = stripped[json_start : json_end + 1].strip()
+                if embedded_object:
+                    candidate_strings.append(embedded_object)
+
+        decoder = json.JSONDecoder()
+
+        for candidate in candidate_strings:
+            current = candidate
+            for _ in range(2):
+                try:
+                    parsed = json.loads(current)
+                except JSONDecodeError:
+                    try:
+                        parsed, _ = decoder.raw_decode(current)
+                    except JSONDecodeError:
+                        break
+
+                if isinstance(parsed, dict):
+                    return parsed
+
+                # Some providers return a JSON-encoded string containing the actual object.
+                if isinstance(parsed, str):
+                    current = parsed.strip()
+                    continue
+
+                break
+
+        return {"raw": raw_arguments}
+
     def _parse_tool_calls(
         self, tool_calls: list[ChatCompletionMessageToolCall] | None
     ) -> list[ToolCall]:
@@ -65,10 +115,7 @@ class LunVexClient:
 
         result = []
         for tc in tool_calls:
-            try:
-                args = json.loads(tc.function.arguments)
-            except json.JSONDecodeError:
-                args = {"raw": tc.function.arguments}
+            args = self._normalize_tool_arguments(tc.function.arguments)
 
             result.append(
                 ToolCall(
@@ -83,10 +130,7 @@ class LunVexClient:
         """Parse accumulated tool call chunks into ToolCall objects."""
         result = []
         for tc in tool_call_chunks:
-            try:
-                args = json.loads(tc.get("arguments", "{}"))
-            except json.JSONDecodeError:
-                args = {"raw": tc.get("arguments", "")}
+            args = self._normalize_tool_arguments(tc.get("arguments", "{}"))
 
             result.append(
                 ToolCall(

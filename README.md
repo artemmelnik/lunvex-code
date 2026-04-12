@@ -255,6 +255,51 @@ python -m lunvex_code.cli --help
 - [Contributing](CONTRIBUTING.md) - How to contribute
 - [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
 
+## File Caching
+
+LunVex Code includes a file caching system to improve performance when reading files repeatedly.
+
+### Cache Configuration
+
+Configure cache via environment variables:
+
+```bash
+# Set maximum number of files to cache (default: 100)
+export LUNVEX_CACHE_MAX_SIZE=200
+
+# Set cache TTL in seconds (default: 300 = 5 minutes)
+export LUNVEX_CACHE_TTL_SECONDS=600
+```
+
+### Cache Management Commands
+
+```bash
+# Show cache statistics
+lunvex-code cache-stats
+
+# Clear all cache entries
+lunvex-code clear-cache
+
+# Configure cache settings
+lunvex-code configure-cache --max-size 200 --ttl-seconds 600
+```
+
+### Cache Tools
+
+The AI can also manage cache using these tools:
+- `cache_stats` - Get cache statistics
+- `clear_cache` - Clear all cache entries
+- `configure_cache` - Configure cache settings
+- `invalidate_cache` - Invalidate cache for specific files
+
+Example AI commands:
+```bash
+lunvex-code run "show cache statistics"
+lunvex-code run "clear the file cache"
+```
+
+See [Cache System Documentation](docs/CACHE_SYSTEM.md) for more details.
+
 ## Troubleshooting
 
 ### `API key environment variable not set`
