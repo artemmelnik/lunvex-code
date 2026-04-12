@@ -17,9 +17,9 @@ Terminal AI coding assistant for working inside real projects from your shell.
 - keeps conversation history between sessions
 - uses project context from the current working directory
 
-The app uses the DeepSeek API:
+The app currently uses the DeepSeek API:
 
-- API key env var: `DEEPSEEK_API_KEY` (or `LUNVEX_API_KEY` for backward compatibility)
+- API key env var: `DEEPSEEK_API_KEY`
 - optional project context file: `LUNVEX.md`
 - Python package/module name: `lunvex_code`
 
@@ -40,11 +40,6 @@ pip install -e .[dev]
 
 ```bash
 export DEEPSEEK_API_KEY=your_key_here
-```
-
-For backward compatibility, you can also use:
-```bash
-export LUNVEX_API_KEY=your_key_here
 ```
 
 You can put that line in `~/.zshrc` if you want it available in every new shell.
@@ -156,7 +151,6 @@ When you launch LunVex in a folder, it tries to find the project root by walking
 
 - `.git`
 - `LUNVEX.md`
-- `DEEPSEEK.md` (legacy)
 - `pyproject.toml`
 - `package.json`
 - `Cargo.toml`
@@ -175,7 +169,7 @@ The CLI has a simple safety model:
 
 ## Project Context With `LUNVEX.md`
 
-If a `LUNVEX.md` file exists in the project root, LunVex loads it and includes it in the system prompt. If only the older `DEEPSEEK.md` exists, LunVex still reads it as a fallback. This is the right place for:
+If a `LUNVEX.md` file exists in the project root, LunVex loads it and includes it in the system prompt. This is the right place for:
 
 - important project commands
 - architecture notes
@@ -268,11 +262,6 @@ Set the API key first:
 
 ```bash
 export DEEPSEEK_API_KEY=your_key_here
-```
-
-For backward compatibility, you can also use:
-```bash
-export LUNVEX_API_KEY=your_key_here
 ```
 
 ### `lunvex-code: command not found`

@@ -473,7 +473,6 @@ python --version
 pip list | grep lunvex
 
 # Environment variables
-env | grep DEEPSEEK
 env | grep LUNVEX
 ```
 

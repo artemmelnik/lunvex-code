@@ -253,7 +253,7 @@ from lunvex_code.llm import LunVexClient
 
 client = LunVexClient(
     api_key="your_api_key",
-    model="deepseek-chat",  # or "deepseek-coder"
+    model="deepseek-chat",
     temperature=0.7,
     max_tokens=2000,
     timeout=30,

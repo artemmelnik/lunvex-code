@@ -359,10 +359,9 @@ You can extend LunVex with custom tools. See [Developer Guide](DEVELOPER_GUIDE.m
 LunVex automatically detects project roots by looking for:
 1. `.git` directory
 2. `LUNVEX.md` file
-3. `DEEPSEEK.md` file (legacy)
-4. `pyproject.toml` (Python)
-5. `package.json` (Node.js)
-6. `Cargo.toml` (Rust)
+3. `pyproject.toml` (Python)
+4. `package.json` (Node.js)
+5. `Cargo.toml` (Rust)
 
 ### Environment Variables
 

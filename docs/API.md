@@ -100,7 +100,7 @@ class LunVexClient:
         max_retries: int = 3,
     ):
         """
-        Initialize DeepSeek client.
+        Initialize the LunVex client.
         
         Args:
             api_key: API key (defaults to DEEPSEEK_API_KEY env var)
@@ -429,7 +429,6 @@ def show_progress(description: str) -> ContextManager:
 APP_COMMAND_NAME: str = "lunvex-code"
 APP_DISPLAY_NAME: str = "LunVex Code"
 APP_CONTEXT_FILENAME: str = "LUNVEX.md"
-LEGACY_CONTEXT_FILENAME: str = "DEEPSEEK.md"
 APP_STATE_DIRNAME: str = ".lunvex-code"
 ```
 

@@ -1,7 +1,7 @@
 [project]
 name = "lunvex-code"
 version = "0.1.0"
-description = "AI coding assistant powered by DeepSeek-V3 - Build your own Claude Code"
+description = "Terminal AI coding assistant for real projects"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"

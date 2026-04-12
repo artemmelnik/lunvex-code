@@ -114,15 +114,20 @@ def print_assistant_message(content: str) -> None:
 
 
 _current_live: Live | None = None
+_thinking_prefix_pending = False
 
 
 def print_stream_chunk(chunk: str) -> None:
     """Print a streaming chunk of text (no newline, immediate flush)."""
-    global _current_live
+    global _current_live, _thinking_prefix_pending
     # Stop the whale animation if it's running
     if _current_live is not None:
         _current_live.stop()
         _current_live = None
+    if _thinking_prefix_pending:
+        print()
+        print("  ", end="", flush=True)
+        _thinking_prefix_pending = False
     print(chunk, end="", flush=True)
 
 
@@ -567,6 +572,27 @@ class PulsingOrb:
         return Text.from_markup(self.get_frame())
 
 
+class InlineDotsIndicator:
+    """Compact inline thinking animation with animated dots only."""
+
+    def __init__(self):
+        self.frame = 0
+
+    def get_frame(self) -> str:
+        """Get the current inline frame."""
+        dots = "." * ((self.frame % 3) + 1)
+        return f"[dim]Thinking{dots.ljust(3)}[/dim]"
+
+    def update(self) -> None:
+        """Advance to the next frame."""
+        self.frame += 1
+
+    def __rich__(self) -> Text:
+        """Rich protocol for rendering."""
+        self.update()
+        return Text.from_markup(self.get_frame())
+
+
 def get_animation_type() -> str:
     """Get animation type from environment or default."""
     # Check if animations are disabled
@@ -575,11 +601,11 @@ def get_animation_type() -> str:
 
     # Check environment variable first
     env_type = os.environ.get("LUNVEX_ANIMATION", "").lower()
-    if env_type in ["robot", "neural", "orb", "none"]:
+    if env_type in ["dots", "robot", "neural", "orb", "none"]:
         return env_type
 
-    # Default to none (no animation)
-    return "none"
+    # Default to the compact inline dots indicator
+    return "dots"
 
 
 def get_animation(animation_type: str = None, width: int = 35):
@@ -589,6 +615,8 @@ def get_animation(animation_type: str = None, width: int = 35):
 
     if animation_type == "none":
         return None
+    elif animation_type == "dots":
+        return InlineDotsIndicator()
     elif animation_type == "neural":
         return NeuralNetwork(width=width)
     elif animation_type == "orb":
@@ -603,17 +631,20 @@ def get_animation(animation_type: str = None, width: int = 35):
 @contextmanager
 def print_thinking(animation_type: str = None):
     """Show an animation while thinking. Context manager that tracks the Live object."""
-    global _current_live
+    global _current_live, _thinking_prefix_pending
 
     animation = get_animation(animation_type, width=35)
 
     # If animation is disabled, just print "Thinking..." and yield
     if animation is None:
         console.print("\n[dim]Thinking...[/dim]", end="")
+        _thinking_prefix_pending = True
         try:
             yield
         finally:
-            console.print()  # New line after thinking
+            if _thinking_prefix_pending:
+                console.print()
+            _thinking_prefix_pending = False
         return
 
     # Otherwise show the animation
@@ -624,11 +655,15 @@ def print_thinking(animation_type: str = None):
         transient=True,
     )
     _current_live = live
+    _thinking_prefix_pending = True
     try:
         with live:
             yield
     finally:
         _current_live = None
+        if _thinking_prefix_pending:
+            console.print()
+        _thinking_prefix_pending = False
 
 
 def print_token_usage(prompt_tokens: int, completion_tokens: int, total_tokens: int) -> None:

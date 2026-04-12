@@ -57,6 +57,21 @@ class TestUIProper:
         except Exception:
             pass  # It's okay if it fails, we're just testing it exists
 
+    def test_print_stream_chunk_starts_on_new_line_after_thinking(self):
+        """The first streamed chunk should move off the Thinking... line."""
+        with patch("builtins.print") as mock_print:
+            ui._thinking_prefix_pending = True
+            ui._current_live = None
+
+            ui.print_stream_chunk("hello")
+
+        assert mock_print.call_args_list[0].args == ()
+        assert mock_print.call_args_list[1].args == ("  ",)
+        assert mock_print.call_args_list[1].kwargs == {"end": "", "flush": True}
+        assert mock_print.call_args_list[2].args == ("hello",)
+        assert mock_print.call_args_list[2].kwargs == {"end": "", "flush": True}
+        assert ui._thinking_prefix_pending is False
+
     def test_end_stream(self):
         """Test stream ending."""
         # Just test it doesn't crash
@@ -168,6 +183,12 @@ class TestUIProper:
         """Test getting animation type."""
         animation_type = ui.get_animation_type()
         assert isinstance(animation_type, str)
+        assert animation_type in {"dots", "robot", "neural", "orb", "none"}
+
+    def test_default_animation_type_is_dots(self):
+        """The compact dots indicator should be the default animation."""
+        with patch.dict("os.environ", {}, clear=True):
+            assert ui.get_animation_type() == "dots"
 
     def test_get_animation(self):
         """Test getting animation."""

@@ -252,7 +252,7 @@ def create_agent(
     Create an agent with default configuration.
 
     Args:
-        api_key: DeepSeek API key (or use DEEPSEEK_API_KEY env var)
+        api_key: API key (or use DEEPSEEK_API_KEY env var)
         model: Model to use (default: deepseek-chat)
         working_dir: Working directory
         trust_mode: Auto-approve safe operations

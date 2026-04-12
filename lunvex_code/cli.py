@@ -7,7 +7,7 @@ from typing import Optional
 import typer
 from dotenv import load_dotenv
 from prompt_toolkit import PromptSession
-from prompt_toolkit.history import FileHistory
+from prompt_toolkit.history import FileHistory, InMemoryHistory
 from rich.console import Console
 
 from . import (
@@ -15,7 +15,6 @@ from . import (
     APP_CONTEXT_FILENAME,
     APP_DISPLAY_NAME,
     APP_STATE_DIRNAME,
-    LEGACY_CONTEXT_FILENAME,
     __version__,
     ui,
 )
@@ -28,7 +27,7 @@ load_dotenv()
 
 app = typer.Typer(
     name=APP_COMMAND_NAME,
-    help="AI coding assistant powered by DeepSeek-V3",
+    help="Terminal AI coding assistant for real projects",
     add_completion=False,
 )
 
@@ -38,10 +37,17 @@ console = Console()
 def get_prompt_session() -> PromptSession:
     """Create a prompt session with history."""
     history_dir = os.path.expanduser(f"~/{APP_STATE_DIRNAME}")
-    os.makedirs(history_dir, exist_ok=True)
     history_file = os.path.join(history_dir, "prompt_history")
 
-    return PromptSession(history=FileHistory(history_file))
+    try:
+        os.makedirs(history_dir, exist_ok=True)
+        with open(history_file, "ab"):
+            pass
+        history = FileHistory(history_file)
+    except OSError:
+        history = InMemoryHistory()
+
+    return PromptSession(history=history)
 
 
 def interactive_loop(agent: Agent) -> None:
@@ -161,14 +167,12 @@ def create_and_run_agent(
     no_animation: bool = False,
 ) -> None:
     """Create an agent and run it with the given task or in interactive mode."""
-    # Check for API key (try DEEPSEEK_API_KEY first, then LUNVEX_API_KEY for backward compatibility)
-    api_key = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LUNVEX_API_KEY")
+    api_key = os.environ.get("DEEPSEEK_API_KEY")
     if not api_key:
         console.print(
             "[error]Error: API key environment variable not set.[/error]\n"
             "Get your API key from: https://platform.deepseek.com/\n"
-            "Then set it: export DEEPSEEK_API_KEY=your_key_here\n"
-            "(or export LUNVEX_API_KEY=your_key_here for backward compatibility)"
+            "Then set it: export DEEPSEEK_API_KEY=your_key_here"
         )
         raise typer.Exit(1)
 
@@ -225,7 +229,7 @@ def run(
         "deepseek-chat",
         "--model",
         "-m",
-        help="Model to use (deepseek-chat, deepseek-coder)",
+        help="Model to use",
     ),
     trust: bool = typer.Option(
         False,
@@ -310,10 +314,6 @@ Describe your project here.
         f.write(template)
 
     console.print(f"[success]Created {context_md_path}[/success]")
-    if os.path.exists(LEGACY_CONTEXT_FILENAME):
-        console.print(
-            f"[warning]{LEGACY_CONTEXT_FILENAME} also exists. {APP_CONTEXT_FILENAME} will be used first.[/warning]"
-        )
     console.print(f"Edit {context_md_path} to add project-specific context for the AI.")
 
 

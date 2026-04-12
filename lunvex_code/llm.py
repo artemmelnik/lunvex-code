@@ -1,4 +1,4 @@
-"""LunVex API client using DeepSeek API with OpenAI-compatible interface."""
+"""LunVex API client using an OpenAI-compatible interface."""
 
 import json
 import os
@@ -33,7 +33,7 @@ class LLMResponse:
 
 
 class LunVexClient:
-    """Client for LunVex API using DeepSeek API with OpenAI SDK."""
+    """Client for LunVex using the OpenAI SDK."""
 
     DEFAULT_MODEL = "deepseek-chat"
     DEFAULT_BASE_URL = "https://api.deepseek.com"
@@ -44,17 +44,14 @@ class LunVexClient:
         model: str | None = None,
         base_url: str | None = None,
     ):
-        # Try DEEPSEEK_API_KEY first (primary), then fall back to LUNVEX_API_KEY for backward compatibility
-        self.api_key = api_key or os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LUNVEX_API_KEY")
+        self.api_key = api_key or os.environ.get("DEEPSEEK_API_KEY")
         if not self.api_key:
             raise ValueError(
-                "API key required. Set DEEPSEEK_API_KEY (or LUNVEX_API_KEY for backward compatibility) environment variable "
-                "or pass api_key parameter."
+                "API key required. Set DEEPSEEK_API_KEY environment variable or pass api_key parameter."
             )
 
-        # Try DEEPSEEK_ prefixed env vars first (primary), then fall back to LUNVEX_ for backward compatibility
-        self.model = model or os.environ.get("DEEPSEEK_MODEL") or os.environ.get("LUNVEX_MODEL", self.DEFAULT_MODEL)
-        self.base_url = base_url or os.environ.get("DEEPSEEK_BASE_URL") or os.environ.get("LUNVEX_BASE_URL", self.DEFAULT_BASE_URL)
+        self.model = model or os.environ.get("DEEPSEEK_MODEL", self.DEFAULT_MODEL)
+        self.base_url = base_url or os.environ.get("DEEPSEEK_BASE_URL", self.DEFAULT_BASE_URL)
 
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.total_tokens_used = 0

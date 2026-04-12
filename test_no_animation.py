@@ -11,12 +11,12 @@ def test_animation_disabled():
     print("Testing animation disabling...")
     print("=" * 60)
     
-    # Test 1: Default animation (should NOT show animation)
-    print("\n1. Testing default animation (should NOT show animation):")
+    # Test 1: Default animation (should show animated dots)
+    print("\n1. Testing default animation (should show animated dots):")
     try:
         with ui.print_thinking():
             time.sleep(1)
-        print("✓ Default animation disabled (showed 'Thinking...' instead)")
+        print("✓ Default inline dots animation works")
     except Exception as e:
         print(f"✗ Error: {e}")
     
@@ -76,7 +76,7 @@ def test_get_animation_type():
         ({"LUNVEX_ANIMATION": "neural"}, "neural"),
         ({"LUNVEX_ANIMATION": "orb"}, "orb"),
         ({"LUNVEX_ANIMATION": "none"}, "none"),
-        ({}, "none"),  # Default (no animation)
+        ({}, "dots"),  # Default inline dots animation
     ]
     
     for env_vars, expected in test_cases:
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     test_get_animation_type()
     
     print("\n" + "=" * 60)
-    print("🎉 All tests passed! Animations can be disabled.")
+    print("🎉 All tests passed! Animations can be customized or disabled.")
     print("\nUsage:")
     print("  - Set LUNVEX_NO_ANIMATION=1 to disable all animations")
     print("  - Use animation_type='none' in print_thinking()")

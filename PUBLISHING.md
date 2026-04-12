@@ -33,7 +33,7 @@ Make sure your `pyproject.toml` is properly configured:
 [project]
 name = "lunvex-code"
 version = "0.1.0"  # Update version for each release
-description = "AI coding assistant powered by DeepSeek-V3"
+description = "Terminal AI coding assistant for real projects"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}

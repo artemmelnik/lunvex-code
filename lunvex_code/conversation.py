@@ -176,7 +176,7 @@ def compact_conversation(
 
     Args:
         history: Original conversation history
-        client: DeepSeek client for summarization
+        client: LLM client for summarization
         keep_recent: Number of recent messages to keep intact
 
     Returns:

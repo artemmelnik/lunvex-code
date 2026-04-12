@@ -4,7 +4,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import APP_CONTEXT_FILENAME, LEGACY_CONTEXT_FILENAME
+from . import APP_CONTEXT_FILENAME
 
 
 @dataclass
@@ -24,17 +24,15 @@ def find_project_root(start_path: str = ".") -> Path:
     Looks for (in order):
     1. .git directory
     2. LUNVEX.md file
-    3. DEEPSEEK.md file (legacy)
-    4. pyproject.toml
-    5. package.json
-    6. Cargo.toml
+    3. pyproject.toml
+    4. package.json
+    5. Cargo.toml
     """
     current = Path(start_path).resolve()
 
     indicators = [
         ".git",
         APP_CONTEXT_FILENAME,
-        LEGACY_CONTEXT_FILENAME,
         "pyproject.toml",
         "package.json",
         "Cargo.toml",
@@ -51,15 +49,14 @@ def find_project_root(start_path: str = ".") -> Path:
 
 
 def load_project_md(project_root: Path) -> tuple[str | None, str | None]:
-    """Load project context markdown, preferring LUNVEX.md and falling back to DEEPSEEK.md."""
-    for filename in (APP_CONTEXT_FILENAME, LEGACY_CONTEXT_FILENAME):
-        md_path = project_root / filename
-        if md_path.exists():
-            try:
-                with open(md_path, "r", encoding="utf-8") as f:
-                    return f.read(), filename
-            except Exception:
-                return None, None
+    """Load project context markdown from LUNVEX.md."""
+    md_path = project_root / APP_CONTEXT_FILENAME
+    if md_path.exists():
+        try:
+            with open(md_path, "r", encoding="utf-8") as f:
+                return f.read(), APP_CONTEXT_FILENAME
+        except Exception:
+            return None, None
 
     return None, None
 

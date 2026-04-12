@@ -39,7 +39,7 @@ def test_environment_variable():
     original_env = os.environ.copy()
     
     try:
-        # Test with animation enabled (default is disabled, so we need to set LUNVEX_ANIMATION)
+        # Test with an explicit animation selection
         os.environ["LUNVEX_ANIMATION"] = "robot"
         from lunvex_code.ui import get_animation_type
         result = get_animation_type()
