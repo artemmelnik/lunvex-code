@@ -137,6 +137,12 @@ def create_default_registry() -> ToolRegistry:
         GitStashTool,
         GitStatusTool,
     )
+    from .llm_cache_tools import (
+        LLMCacheStatsTool,
+        ClearLLMCacheTool,
+        ConfigureLLMCacheTool,
+        InvalidateLLMCacheTool,
+    )
     from .search_tools import GlobTool, GrepTool
     from .web_tools import FetchURLTool
 
@@ -162,6 +168,10 @@ def create_default_registry() -> ToolRegistry:
     registry.register(ClearCacheTool())
     registry.register(ConfigureCacheTool())
     registry.register(InvalidateCacheTool())
+    registry.register(LLMCacheStatsTool())
+    registry.register(ClearLLMCacheTool())
+    registry.register(ConfigureLLMCacheTool())
+    registry.register(InvalidateLLMCacheTool())
     registry.register(GitStatusTool())
     registry.register(GitDiffTool())
     registry.register(GitLogTool())

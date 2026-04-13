@@ -1,12 +1,15 @@
 """File operation tools: read, write, edit."""
 
+import os
 from pathlib import Path
 
 from ..cache import read_file_with_cache
+from ..progress import spinner
 from .base import Tool, ToolResult
+from .progress_decorators import with_file_progress, ProgressAwareMixin
 
 
-class ReadFileTool(Tool):
+class ReadFileTool(Tool, ProgressAwareMixin):
     """Read the contents of a file."""
 
     name = "read_file"
@@ -31,6 +34,7 @@ class ReadFileTool(Tool):
         },
     }
 
+    @with_file_progress("Reading file")
     def execute(self, path: str, limit: int | None = None, offset: int = 1) -> ToolResult:
         try:
             # Expand user path and resolve
@@ -42,8 +46,18 @@ class ReadFileTool(Tool):
             if not file_path.is_file():
                 return ToolResult(success=False, output="", error=f"Not a file: {path}")
 
+            # Get file size for progress estimation
+            file_size = file_path.stat().st_size
+            
+            # Update progress for large files
+            if file_size > 1024 * 1024:  # > 1MB
+                self._update_progress(0.3, "Reading file...")
+
             # Read file with caching
             content, from_cache = read_file_with_cache(file_path, limit, offset)
+            
+            if file_size > 1024 * 1024:
+                self._update_progress(0.7, "Formatting content...")
             
             # Split into lines for formatting
             lines = content.splitlines(keepends=True)
@@ -72,7 +86,7 @@ class ReadFileTool(Tool):
             return ToolResult(success=False, output="", error=str(e))
 
 
-class WriteFileTool(Tool):
+class WriteFileTool(Tool, ProgressAwareMixin):
     """Write content to a file (create or overwrite)."""
 
     name = "write_file"
@@ -94,16 +108,24 @@ class WriteFileTool(Tool):
         },
     }
 
+    @with_file_progress("Writing file")
     def execute(self, path: str, content: str) -> ToolResult:
         try:
             file_path = Path(path).expanduser().resolve()
+            
+            # Update progress
+            self._update_progress(0.3, "Preparing to write...")
 
             # Create parent directories if needed
             file_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            self._update_progress(0.6, "Writing content...")
 
             # Write the file
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
+            
+            self._update_progress(0.8, "Updating cache...")
 
             # Invalidate cache for this file
             from ..cache import get_file_cache
@@ -121,7 +143,7 @@ class WriteFileTool(Tool):
             return ToolResult(success=False, output="", error=str(e))
 
 
-class EditFileTool(Tool):
+class EditFileTool(Tool, ProgressAwareMixin):
     """Make surgical edits to a file using string replacement."""
 
     name = "edit_file"
@@ -149,19 +171,26 @@ class EditFileTool(Tool):
         },
     }
 
+    @with_file_progress("Editing file")
     def execute(self, path: str, old_str: str, new_str: str) -> ToolResult:
         try:
             file_path = Path(path).expanduser().resolve()
+            
+            self._update_progress(0.2, "Checking file...")
 
             if not file_path.exists():
                 return ToolResult(success=False, output="", error=f"File not found: {path}")
 
             if not file_path.is_file():
                 return ToolResult(success=False, output="", error=f"Not a file: {path}")
+            
+            self._update_progress(0.4, "Reading file...")
 
             # Read current content
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
+            
+            self._update_progress(0.6, "Finding string...")
 
             # Check uniqueness
             count = content.count(old_str)
@@ -177,6 +206,8 @@ class EditFileTool(Tool):
                     output="",
                     error=f"String found {count} times. old_str must be unique. Include more surrounding context to make it unique.",
                 )
+            
+            self._update_progress(0.8, "Making replacement...")
 
             # Perform replacement
             new_content = content.replace(old_str, new_str)
@@ -184,6 +215,8 @@ class EditFileTool(Tool):
             # Write back
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
+            
+            self._update_progress(0.9, "Updating cache...")
 
             # Invalidate cache for this file
             from ..cache import get_file_cache

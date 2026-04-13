@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
-    { name = "Artem Melnik", email = "artemmelnik@example.com" },
+    { name = "Artem Melnik", email = "artemmelnik989@gmail.com" },
 ]
 keywords = [
     "ai",

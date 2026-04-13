@@ -17,6 +17,8 @@ from . import (
     APP_STATE_DIRNAME,
     CACHE_MAX_SIZE,
     CACHE_TTL_SECONDS,
+    LLM_CACHE_MAX_SIZE,
+    LLM_CACHE_TTL_SECONDS,
     __version__,
     ui,
 )
@@ -24,12 +26,14 @@ from .agent import Agent, AgentConfig
 from .cache import configure_cache
 from .context import get_project_context
 from .llm import LunVexClient
+from .llm_cache import configure_llm_cache
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Configure cache from environment variables
+# Configure caches from environment variables
 configure_cache(max_size=CACHE_MAX_SIZE, ttl_seconds=CACHE_TTL_SECONDS)
+# Note: LLM cache is configured lazily when first accessed
 
 app = typer.Typer(
     name=APP_COMMAND_NAME,
@@ -393,6 +397,65 @@ def configure_cache(
     
     configure_cache(max_size=max_size, ttl_seconds=ttl_seconds)
     console.print(f"[green]✓[/green] Cache configured: max_size={max_size}, ttl_seconds={ttl_seconds}")
+
+
+@app.command()
+def llm_cache_stats() -> None:
+    """Show LLM cache statistics."""
+    from .llm_cache import get_llm_cache
+
+    cache = get_llm_cache()
+    stats = cache.get_stats()
+
+    console.print("[bold]LLM Cache Statistics:[/bold]")
+    console.print(f"  Size: {stats['current_size']}/{stats['max_size']} responses")
+    console.print(f"  Hits: {stats['hits']}")
+    console.print(f"  Misses: {stats['misses']}")
+    console.print(f"  Hit Rate: {stats['hit_rate']:.1%}")
+    console.print(f"  Tokens Saved: {stats['tokens_saved']:,}")
+    console.print(f"  TTL: {stats['ttl_seconds']} seconds ({stats['ttl_seconds']/3600:.1f} hours)")
+    
+    if stats['current_size'] > 0:
+        oldest_age = int(time.time() - stats['oldest_entry'])
+        console.print(f"  Oldest Entry: {oldest_age} seconds ago")
+        console.print(f"  Most Accessed: {stats['most_accessed']} hits")
+
+
+@app.command()
+def clear_llm_cache() -> None:
+    """Clear all entries from the LLM cache."""
+    from .llm_cache import get_llm_cache
+
+    cache = get_llm_cache()
+    cache.clear()
+
+    console.print("[green]✓[/green] LLM cache cleared successfully.")
+
+
+@app.command()
+def configure_llm_cache(
+    max_size: int = typer.Option(100, help="Maximum number of responses to cache"),
+    ttl_seconds: int = typer.Option(3600, help="Time-to-live for cache entries in seconds"),
+) -> None:
+    """Configure LLM cache settings."""
+    from .llm_cache import configure_llm_cache, save_llm_cache
+
+    if max_size <= 0:
+        console.print("[red]Error:[/red] max_size must be positive")
+        raise typer.Exit(1)
+
+    if ttl_seconds <= 0:
+        console.print("[red]Error:[/red] ttl_seconds must be positive")
+        raise typer.Exit(1)
+
+    configure_llm_cache(max_size=max_size, ttl_seconds=ttl_seconds)
+    save_llm_cache()
+    console.print(f"[green]✓[/green] LLM cache configured: max_size={max_size}, ttl_seconds={ttl_seconds}")
+    console.print(f"[dim]Configuration saved to persistent storage[/dim]")
+
+
+# Import time for llm_cache_stats
+import time
 
 
 def main():

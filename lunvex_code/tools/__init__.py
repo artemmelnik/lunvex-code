@@ -30,6 +30,12 @@ from .git_tools import (
     GitStashTool,
     GitStatusTool,
 )
+from .llm_cache_tools import (
+    LLMCacheStatsTool,
+    ClearLLMCacheTool,
+    ConfigureLLMCacheTool,
+    InvalidateLLMCacheTool,
+)
 from .search_tools import GlobTool, GrepTool
 from .web_tools import FetchURLTool
 
@@ -66,4 +72,8 @@ __all__ = [
     "GitCheckoutTool",
     "GitMergeTool",
     "GitFetchTool",
+    "LLMCacheStatsTool",
+    "ClearLLMCacheTool",
+    "ConfigureLLMCacheTool",
+    "InvalidateLLMCacheTool",
 ]

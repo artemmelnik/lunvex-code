@@ -3,10 +3,12 @@
 import re
 from pathlib import Path
 
+from ..progress import spinner
 from .base import Tool, ToolResult
+from .progress_decorators import with_search_progress, ProgressAwareMixin
 
 
-class GlobTool(Tool):
+class GlobTool(Tool, ProgressAwareMixin):
     """Find files matching a pattern."""
 
     name = "glob"
@@ -49,6 +51,7 @@ class GlobTool(Tool):
         "target",  # Rust
     }
 
+    @with_search_progress("Searching files")
     def execute(self, pattern: str, path: str = ".", limit: int = 100) -> ToolResult:
         try:
             base_path = Path(path).expanduser().resolve()
@@ -57,9 +60,18 @@ class GlobTool(Tool):
                 return ToolResult(success=False, output="", error=f"Path not found: {path}")
 
             matches = []
+            total_scanned = 0
+            
+            self._update_progress(0.1, "Starting search...")
 
             # Use pathlib's glob for pattern matching
-            for match in base_path.glob(pattern):
+            for i, match in enumerate(base_path.glob(pattern)):
+                total_scanned += 1
+                
+                # Update progress every 100 files
+                if i % 100 == 0:
+                    self._update_progress(min(0.9, i / 1000), f"Scanned {i} files...")
+                
                 # Skip directories we don't care about
                 parts = match.parts
                 if any(skip in parts for skip in self.SKIP_DIRS):
@@ -75,6 +87,8 @@ class GlobTool(Tool):
 
                 if len(matches) >= limit:
                     break
+            
+            self._update_progress(0.9, f"Found {len(matches)} matches, sorting...")
 
             # Sort by modification time (most recent first)
             def get_mtime(p: str) -> float:
@@ -91,7 +105,7 @@ class GlobTool(Tool):
                     output=f"No files found matching '{pattern}' in {path}",
                 )
 
-            result = f"Found {len(matches)} file(s) matching '{pattern}':\n"
+            result = f"Found {len(matches)} file(s) matching '{pattern}' (scanned {total_scanned} items):\n"
             result += "\n".join(f"  {m}" for m in matches)
 
             if len(matches) >= limit:
@@ -103,7 +117,7 @@ class GlobTool(Tool):
             return ToolResult(success=False, output="", error=str(e))
 
 
-class GrepTool(Tool):
+class GrepTool(Tool, ProgressAwareMixin):
     """Search for patterns in file contents."""
 
     name = "grep"
@@ -192,6 +206,7 @@ class GrepTool(Tool):
         ".mov",
     }
 
+    @with_search_progress("Searching in files")
     def execute(
         self,
         pattern: str,
@@ -214,6 +229,9 @@ class GrepTool(Tool):
                 return ToolResult(success=False, output="", error=f"Invalid regex pattern: {e}")
 
             matches = []
+            files_searched = 0
+            
+            self._update_progress(0.1, "Finding files to search...")
 
             # Get files to search
             if base_path.is_file():
@@ -221,8 +239,17 @@ class GrepTool(Tool):
             else:
                 # Use glob to find files
                 files_to_search = list(base_path.glob(f"**/{include}"))
+            
+            self._update_progress(0.3, f"Found {len(files_to_search)} files to search")
 
-            for file_path in files_to_search:
+            for i, file_path in enumerate(files_to_search):
+                files_searched += 1
+                
+                # Update progress every 10 files
+                if i % 10 == 0:
+                    progress = 0.3 + (i / len(files_to_search)) * 0.6
+                    self._update_progress(progress, f"Searching file {i+1}/{len(files_to_search)}...")
+                
                 if not file_path.is_file():
                     continue
 

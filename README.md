@@ -58,6 +58,26 @@ You can put that line in `~/.zshrc` if you want it available in every new shell.
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Changelog](CHANGELOG.md)
 
+## Progress Indicators
+
+LunVex Code includes a comprehensive progress indicators system for long-running operations:
+
+### Features
+- **Spinners** for indeterminate operations
+- **Progress bars** for operations with known duration
+- **Multi-task progress** for parallel operations
+- **Automatic integration** with file and search tools
+- **Minimal overhead** with rich formatting
+
+### Usage
+Progress indicators automatically appear for:
+- Reading/writing large files
+- Searching through many files
+- Git operations
+- Batch processing
+
+See [Progress Indicators Documentation](docs/PROGRESS_INDICATORS.md) for details.
+
 ### 3. Start the assistant
 
 ```bash
@@ -255,14 +275,15 @@ python -m lunvex_code.cli --help
 - [Contributing](CONTRIBUTING.md) - How to contribute
 - [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
 
-## File Caching
+## Caching Systems
 
-LunVex Code includes a file caching system to improve performance when reading files repeatedly.
+LunVex Code includes two caching systems to improve performance and reduce costs.
 
-### Cache Configuration
+### File Caching
 
-Configure cache via environment variables:
+Improves performance when reading files repeatedly.
 
+#### Configuration
 ```bash
 # Set maximum number of files to cache (default: 100)
 export LUNVEX_CACHE_MAX_SIZE=200
@@ -271,8 +292,7 @@ export LUNVEX_CACHE_MAX_SIZE=200
 export LUNVEX_CACHE_TTL_SECONDS=600
 ```
 
-### Cache Management Commands
-
+#### Management Commands
 ```bash
 # Show cache statistics
 lunvex-code cache-stats
@@ -284,21 +304,56 @@ lunvex-code clear-cache
 lunvex-code configure-cache --max-size 200 --ttl-seconds 600
 ```
 
+### LLM Response Caching
+
+Reduces API costs by caching LLM responses.
+
+#### Configuration
+```bash
+# Set maximum number of responses to cache (default: 100)
+export LUNVEX_LLM_CACHE_MAX_SIZE=200
+
+# Set cache TTL in seconds (default: 3600 = 1 hour)
+export LUNVEX_LLM_CACHE_TTL_SECONDS=7200
+```
+
+#### Management Commands
+```bash
+# Show LLM cache statistics
+lunvex-code llm-cache-stats
+
+# Clear all LLM cache entries
+lunvex-code clear-llm-cache
+
+# Configure LLM cache settings
+lunvex-code configure-llm-cache --max-size 200 --ttl-seconds 7200
+```
+
 ### Cache Tools
 
-The AI can also manage cache using these tools:
-- `cache_stats` - Get cache statistics
-- `clear_cache` - Clear all cache entries
-- `configure_cache` - Configure cache settings
+The AI can manage both cache systems using these tools:
+
+#### File Cache Tools
+- `cache_stats` - Get file cache statistics
+- `clear_cache` - Clear all file cache entries
+- `configure_cache` - Configure file cache settings
 - `invalidate_cache` - Invalidate cache for specific files
+
+#### LLM Cache Tools
+- `llm_cache_stats` - Get LLM cache statistics
+- `clear_llm_cache` - Clear all LLM cache entries
+- `configure_llm_cache` - Configure LLM cache settings
+- `invalidate_llm_cache` - Invalidate specific LLM cache entries
 
 Example AI commands:
 ```bash
 lunvex-code run "show cache statistics"
 lunvex-code run "clear the file cache"
+lunvex-code run "show llm cache statistics"
+lunvex-code run "configure llm cache with max size 500"
 ```
 
-See [Cache System Documentation](docs/CACHE_SYSTEM.md) for more details.
+See [Cache System Documentation](docs/CACHE_SYSTEM.md) and [LLM Cache Documentation](docs/LLM_CACHE.md) for more details.
 
 ## Troubleshooting
 

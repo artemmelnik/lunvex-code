@@ -9,6 +9,8 @@ from typing import Any, Callable
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageToolCall
 
+from .llm_cache import get_llm_cache
+
 
 @dataclass
 class ToolCall:
@@ -147,6 +149,7 @@ class LunVexClient:
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.0,
         max_tokens: int = 4096,
+        use_cache: bool = True,
     ) -> LLMResponse:
         """Send a chat request to DeepSeek.
 
@@ -155,10 +158,39 @@ class LunVexClient:
             tools: Optional list of tool definitions in OpenAI format
             temperature: Sampling temperature (0.0 = deterministic)
             max_tokens: Maximum tokens in response
+            use_cache: Whether to use LLM response cache
 
         Returns:
             LLMResponse with content and/or tool calls
         """
+        # Try to get from cache first
+        if use_cache:
+            cache = get_llm_cache()
+            cached_result = cache.get(
+                model=self.model,
+                messages=messages,
+                tools=tools,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            
+            if cached_result is not None:
+                response_data, from_cache = cached_result
+                if from_cache:
+                    # Reconstruct LLMResponse from cached data
+                    return LLMResponse(
+                        content=response_data.get("content"),
+                        tool_calls=[
+                            ToolCall(
+                                id=tc["id"],
+                                name=tc["name"],
+                                arguments=tc["arguments"]
+                            ) for tc in response_data.get("tool_calls", [])
+                        ],
+                        finish_reason=response_data.get("finish_reason", "stop"),
+                        usage=response_data.get("usage", {}),
+                    )
+        
         kwargs: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
@@ -185,13 +217,46 @@ class LunVexClient:
 
         choice = response.choices[0]
         message = choice.message
-
-        return LLMResponse(
+        
+        # Parse tool calls
+        tool_calls = self._parse_tool_calls(message.tool_calls)
+        
+        # Create response object
+        llm_response = LLMResponse(
             content=message.content,
-            tool_calls=self._parse_tool_calls(message.tool_calls),
+            tool_calls=tool_calls,
             finish_reason=choice.finish_reason or "stop",
             usage=usage,
         )
+        
+        # Cache the response
+        if use_cache:
+            cache = get_llm_cache()
+            # Prepare response data for caching
+            response_data = {
+                "content": message.content,
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "name": tc.name,
+                        "arguments": tc.arguments
+                    } for tc in tool_calls
+                ],
+                "finish_reason": choice.finish_reason or "stop",
+                "usage": usage,
+            }
+            
+            cache.put(
+                model=self.model,
+                messages=messages,
+                response=response_data,
+                tools=tools,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                token_count=usage.get("total_tokens", 0),
+            )
+
+        return llm_response
 
     def chat_stream(
         self,
