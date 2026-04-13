@@ -513,15 +513,36 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 </div>
 
-## 📚 Additional Documentation
+## 📚 Documentation
 
+Comprehensive documentation is available in the [`docs/`](./docs/) directory:
+
+### User Guides
+- [User Guide](./docs/USER_GUIDE.md) - Complete user guide with examples
+- [Examples](./docs/EXAMPLES.md) - Practical usage examples
+- [Troubleshooting](./docs/TROUBLESHOOTING.md) - Common issues and solutions
+
+### Developer Resources
+- [Developer Guide](./docs/DEVELOPER_GUIDE.md) - Development setup and workflow
+- [API Reference](./docs/API.md) - API integration guide
+- [Architecture](./docs/ARCHITECTURE.md) - System architecture overview
+
+### Feature Documentation
+- [Task Planning](./docs/TASK_PLANNING.md) - Intelligent task decomposition
+- [Cache Systems](./docs/CACHE_SYSTEM.md) - File and LLM caching
+- [Git Tools](./docs/GIT_TOOLS.md) - Git integration features
+- [Progress Indicators](./docs/PROGRESS_INDICATORS.md) - UI and progress tracking
+
+### Project Information
 - [TEST_SYSTEM_STATUS.md](./TEST_SYSTEM_STATUS.md) - Complete test system report
-- [TASK_PLANNING.md](./TASK_PLANNING.md) - Task planning system documentation
-- [TASK_PLANNING_IMPLEMENTATION.md](./TASK_PLANNING_IMPLEMENTATION.md) - Task planning implementation details
-- [ASYNC_TESTING_SUMMARY.md](./ASYNC_TESTING_SUMMARY.md) - Async system testing report
-- [PUBLISHING.md](./PUBLISHING.md) - Package publishing guide
-- [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md) - Release process checklist
 - [CHANGELOG.md](./CHANGELOG.md) - Project changelog
+- [Roadmap](./docs/ROADMAP.md) - Future development plans
+
+### Release & Publishing
+- [PyPI Publishing Guide](./docs/PYPI_PUBLISHING_GUIDE.md) - Complete publishing instructions
+- [Release Instructions](./docs/RELEASE_INSTRUCTIONS.md) - Release process checklist
+
+See the [Documentation Index](./docs/README.md) for a complete list of all available documentation.
 - [FINAL_REPORT.md](./FINAL_REPORT.md) - Final project report
 
 ## 🏆 Featured Use Cases
