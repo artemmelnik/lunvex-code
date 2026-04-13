@@ -6,9 +6,10 @@ from pathlib import Path
 from lunvex_code.dependencies import DependencyAnalyzer
 from lunvex_code.dependencies.security import scan_for_vulnerabilities
 from ..base import Tool, ToolResult
+from ..progress_decorators import with_dependency_progress, ProgressAwareMixin
 
 
-class ScanVulnerabilitiesTool(Tool):
+class ScanVulnerabilitiesTool(Tool, ProgressAwareMixin):
     """Scan dependencies for security vulnerabilities."""
 
     name = "scan_vulnerabilities"
@@ -30,6 +31,7 @@ class ScanVulnerabilitiesTool(Tool):
         },
     }
 
+    @with_dependency_progress("Scanning for vulnerabilities")
     def execute(self, ecosystem: str = "all", format: str = "summary") -> ToolResult:
         try:
             cwd = Path.cwd()

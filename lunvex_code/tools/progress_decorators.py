@@ -173,3 +173,39 @@ class ProgressAwareMixin:
         
         manager = get_progress_manager()
         manager.stop_current(message, success)
+
+
+def with_dependency_progress(message: Optional[str] = None) -> Callable:
+    """Decorator for dependency operations with progress."""
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(self, *args, **kwargs) -> Any:
+            progress_message = message or "Analyzing dependencies..."
+
+            with spinner(progress_message) as progress:
+                try:
+                    result = func(self, *args, **kwargs)
+                    
+                    # Try to extract meaningful info from result
+                    if hasattr(result, 'output'):
+                        output = result.output
+                        if "Total:" in output or "dependencies" in output.lower():
+                            # Extract summary from output
+                            lines = output.split('\n')
+                            summary = next((line for line in lines if "Total:" in line or "dependencies" in line.lower()), "")
+                            if summary:
+                                progress.stop(f"✓ {summary}", success=True)
+                            else:
+                                progress.stop(f"✓ {progress_message}", success=True)
+                        else:
+                            progress.stop(f"✓ {progress_message}", success=True)
+                    else:
+                        progress.stop(f"✓ {progress_message}", success=True)
+                    
+                    return result
+                except Exception as e:
+                    progress.stop(f"✗ {progress_message}: {str(e)}", success=False)
+                    raise
+
+        return wrapper
+    return decorator

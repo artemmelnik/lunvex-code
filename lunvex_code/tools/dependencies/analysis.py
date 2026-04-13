@@ -5,9 +5,10 @@ from pathlib import Path
 
 from lunvex_code.dependencies import DependencyAnalyzer
 from ..base import Tool, ToolResult
+from ..progress_decorators import with_dependency_progress, ProgressAwareMixin
 
 
-class AnalyzeDependenciesTool(Tool):
+class AnalyzeDependenciesTool(Tool, ProgressAwareMixin):
     """Analyze project dependencies across different ecosystems."""
 
     name = "analyze_dependencies"
@@ -31,6 +32,7 @@ class AnalyzeDependenciesTool(Tool):
         },
     }
 
+    @with_dependency_progress("Analyzing dependencies")
     def execute(self, format: str = "summary", ecosystem: str = "all") -> ToolResult:
         try:
             # Get current working directory from context

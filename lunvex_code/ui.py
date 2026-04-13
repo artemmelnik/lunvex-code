@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 from contextlib import contextmanager
 from typing import Any
 
@@ -28,21 +29,24 @@ THEME = Theme(
     }
 )
 
-console = Console(theme=THEME)
+console = Console(theme=THEME, force_terminal=True, color_system="auto")
 
 
 # ASCII Art Logo
 LOGO = r"""
-[bold cyan]  _      _   _ _   ___     _______  __[/bold cyan]
-[bold cyan] | |    | | | | \ | \ \   / / ____| \ \ [/bold cyan]
-[bold cyan] | |    | | | |  \| |\ \ / /|  _|    | |[/bold cyan]
-[bold cyan] | |___ | |_| | |\  | \ V / | |___   | |[/bold cyan]
-[bold cyan] |_____(_)___/|_| \_|  \_/  |_____| /_/[/bold cyan]
-[bold blue]   ____   ___   ____   _____[/bold blue]
-[bold blue]  / ___| / _ \ |  _ \ | ____|[/bold blue]
-[bold blue] | |    | | | || | | ||  _|  [/bold blue]
-[bold blue] | |___ | |_| || |_| || |___ [/bold blue]
-[bold blue]  \____| \___/ |____/ |_____|[/bold blue]
+[bold cyan]██╗     ██╗   ██╗███╗   ██╗██╗   ██╗███████╗██╗  ██╗[/bold cyan]
+[bold cyan]██║     ██║   ██║████╗  ██║██║   ██║██╔════╝╚██╗██╔╝[/bold cyan]
+[bold cyan]██║     ██║   ██║██╔██╗ ██║██║   ██║█████╗   ╚███╔╝ [/bold cyan]
+[bold cyan]██║     ██║   ██║██║╚██╗██║╚██╗ ██╔╝██╔══╝   ██╔██╗ [/bold cyan]
+[bold cyan]███████╗╚██████╔╝██║ ╚████║ ╚████╔╝ ███████╗██╔╝ ██╗[/bold cyan]
+[bold cyan]╚══════╝ ╚═════╝ ╚═╝  ╚═══╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝[/bold cyan]
+
+[bold blue]  ██████╗ ██████╗ ██████╗ ███████╗[/bold blue]
+[bold blue] ██╔════╝██╔═══██╗██╔══██╗██╔════╝[/bold blue]
+[bold blue] ██║     ██║   ██║██║  ██║█████╗  [/bold blue]
+[bold blue] ██║     ██║   ██║██║  ██║██╔══╝  [/bold blue]
+[bold blue] ╚██████╗╚██████╔╝██████╔╝███████╗[/bold blue]
+[bold blue]  ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝[/bold blue]
 """
 
 LOGO_SMALL = r"""
@@ -128,7 +132,9 @@ def print_stream_chunk(chunk: str) -> None:
         print()
         print("  ", end="", flush=True)
         _thinking_prefix_pending = False
-    print(chunk, end="", flush=True)
+    # Use sys.stdout.write for immediate output without Rich formatting
+    sys.stdout.write(chunk)
+    sys.stdout.flush()
 
 
 def end_stream() -> None:
