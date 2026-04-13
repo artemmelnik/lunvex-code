@@ -1,9 +1,9 @@
 """Web access tools for fetching external URLs."""
 
-from html import unescape
-from html.parser import HTMLParser
 import json
 import re
+from html import unescape
+from html.parser import HTMLParser
 from urllib.parse import urlparse
 
 import requests

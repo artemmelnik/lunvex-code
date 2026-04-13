@@ -336,7 +336,9 @@ class TestPermissionRuleClasses:
         rule = SessionRule()
         rule.add_to_allowlist("bash(curl:*)")
 
-        assert rule.check("bash", {"command": "curl -s https://example.com"}) == PermissionLevel.AUTO
+        assert (
+            rule.check("bash", {"command": "curl -s https://example.com"}) == PermissionLevel.AUTO
+        )
 
     def test_session_rule_check_supports_write_alias(self):
         """SessionRule write alias should match file path tools."""

@@ -5,8 +5,9 @@ from pathlib import Path
 
 from lunvex_code.dependencies import DependencyAnalyzer
 from lunvex_code.dependencies.security import scan_for_vulnerabilities
+
 from ..base import Tool, ToolResult
-from ..progress_decorators import with_dependency_progress, ProgressAwareMixin
+from ..progress_decorators import ProgressAwareMixin, with_dependency_progress
 
 
 class ScanVulnerabilitiesTool(Tool, ProgressAwareMixin):

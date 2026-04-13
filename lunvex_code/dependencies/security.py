@@ -106,6 +106,7 @@ class VulnerabilityScanner:
     def __init__(self, cache_dir: Optional[Path] = None):
         # Use the fixed scanner internally to avoid false positives
         from .security_fixed import FixedVulnerabilityScanner
+
         self._fixed_scanner = FixedVulnerabilityScanner(cache_dir)
 
     def scan_dependencies(self, dependencies: List[Dependency]) -> VulnerabilityScanResult:
@@ -127,11 +128,15 @@ class VulnerabilityScanner:
         """Check GitHub Advisory Database."""
         return self._fixed_scanner._check_github_fixed(dependency)
 
-    def _parse_osv_response(self, data: Dict[str, Any], dependency: Dependency) -> List[Vulnerability]:
+    def _parse_osv_response(
+        self, data: Dict[str, Any], dependency: Dependency
+    ) -> List[Vulnerability]:
         """Parse OSV API response."""
         return self._fixed_scanner._parse_osv_response_fixed(data, dependency)
 
-    def _parse_github_response(self, data: List[Dict[str, Any]], dependency: Dependency) -> List[Vulnerability]:
+    def _parse_github_response(
+        self, data: List[Dict[str, Any]], dependency: Dependency
+    ) -> List[Vulnerability]:
         """Parse GitHub Advisory API response."""
         return self._fixed_scanner._parse_github_response_fixed(data, dependency)
 
@@ -144,5 +149,6 @@ def scan_for_vulnerabilities(dependencies: List[Dependency]) -> VulnerabilitySca
     """Convenience function to scan dependencies for vulnerabilities."""
     # Use the fixed scanner to avoid false positives
     from .security_fixed import FixedVulnerabilityScanner
+
     scanner = FixedVulnerabilityScanner()
     return scanner.scan_dependencies(dependencies)

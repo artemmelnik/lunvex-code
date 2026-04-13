@@ -6,14 +6,14 @@ to continue working without modification.
 """
 
 from .dependencies import (
-    AnalyzeDependenciesTool,
-    ListDependenciesTool,
-    CheckDependencyConfigTool,
-    UpdateDependencyConfigTool,
     AddDependencyTool,
+    AnalyzeDependenciesTool,
+    CheckDependencyConfigTool,
+    ListDependenciesTool,
     RemoveDependencyTool,
-    UpdateDependencyTool,
     ScanVulnerabilitiesTool,
+    UpdateDependencyConfigTool,
+    UpdateDependencyTool,
     UpgradeDependenciesTool,
     VisualizeDependenciesTool,
 )

@@ -1,6 +1,6 @@
 """Proper tests for UI components based on actual functions."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from lunvex_code import ui
 
@@ -23,7 +23,7 @@ class TestUIProper:
     def test_print_banner(self):
         """Test banner printing."""
         version = "0.1.0"
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_banner(version)
             assert mock_print.called
@@ -33,7 +33,7 @@ class TestUIProper:
         version = "0.1.0"
         working_dir = "/test/path"
         context_loaded = True
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_welcome(version, working_dir, context_loaded)
             assert mock_print.called
@@ -41,7 +41,7 @@ class TestUIProper:
     def test_print_assistant_message(self):
         """Test assistant message printing."""
         content = "Hello, I'm the assistant!"
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_assistant_message(content)
             assert mock_print.called
@@ -49,7 +49,7 @@ class TestUIProper:
     def test_print_stream_chunk(self):
         """Test stream chunk printing."""
         chunk = "streaming "
-        
+
         # The function might use a global variable or not
         # Just test it doesn't crash
         try:
@@ -84,7 +84,7 @@ class TestUIProper:
         """Test tool call printing."""
         tool_name = "test_tool"
         tool_input = {"param": "value"}
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_tool_call(tool_name, tool_input)
             assert mock_print.called
@@ -98,7 +98,7 @@ class TestUIProper:
     def test_print_tool_result_success(self):
         """Test tool result printing (success)."""
         result = "Operation completed successfully"
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_tool_result(result, success=True)
             assert mock_print.called
@@ -106,7 +106,7 @@ class TestUIProper:
     def test_print_tool_result_error(self):
         """Test tool result printing (error)."""
         result = "Operation failed"
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_tool_result(result, success=False)
             assert mock_print.called
@@ -115,7 +115,7 @@ class TestUIProper:
         """Test tool result printing with truncation."""
         # Create a long result
         result = "A" * 600  # 600 characters
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_tool_result(result, success=True, truncate=500)
             assert mock_print.called
@@ -123,7 +123,7 @@ class TestUIProper:
     def test_print_error(self):
         """Test error message printing."""
         message = "Test error"
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_error(message)
             assert mock_print.called
@@ -131,7 +131,7 @@ class TestUIProper:
     def test_print_success(self):
         """Test success message printing."""
         message = "Test success"
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_success(message)
             assert mock_print.called
@@ -139,7 +139,7 @@ class TestUIProper:
     def test_print_warning(self):
         """Test warning message printing."""
         message = "Test warning"
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_warning(message)
             assert mock_print.called
@@ -147,7 +147,7 @@ class TestUIProper:
     def test_print_info(self):
         """Test info message printing."""
         message = "Test info"
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_info(message)
             assert mock_print.called
@@ -155,7 +155,7 @@ class TestUIProper:
     def test_ask_permission_default(self):
         """Test permission asking with default options."""
         prompt = "Test permission prompt"
-        
+
         with patch("rich.prompt.Prompt.ask", return_value="y"):
             result = ui.ask_permission(prompt)
             assert result in ["y", "n", "always"]
@@ -164,7 +164,7 @@ class TestUIProper:
         """Test permission asking with custom options."""
         prompt = "Test permission prompt"
         options = ["yes", "no", "maybe"]
-        
+
         with patch("rich.prompt.Prompt.ask", return_value="yes"):
             result = ui.ask_permission(prompt, options)
             # The function converts "yes" to "y" in its logic
@@ -174,7 +174,7 @@ class TestUIProper:
     def test_get_user_input(self):
         """Test getting user input."""
         prompt = "Test prompt"
-        
+
         with patch("rich.prompt.Prompt.ask", return_value="user input"):
             result = ui.get_user_input(prompt)
             assert result == "user input"
@@ -192,15 +192,16 @@ class TestUIProper:
 
     def test_get_animation(self):
         """Test getting animation."""
-        animation = ui.get_animation()
+        # animation = ui.get_animation()  # Unused variable
         # Animation might be None if animations are disabled
         # Just test the function doesn't crash
+        ui.get_animation()
 
     def test_print_thinking(self):
         """Test thinking animation printing."""
         # Mock animation type to ensure we get an animation
         with patch.object(ui, "get_animation_type", return_value="dots"):
-            with patch.object(ui.console, "print") as mock_print:
+            with patch.object(ui.console, "print"):  # as mock_print:  # Unused variable
                 ui.print_thinking()
                 # May or may not print depending on conditions
                 # Just test it doesn't crash
@@ -210,7 +211,7 @@ class TestUIProper:
         prompt_tokens = 100
         completion_tokens = 50
         total_tokens = 150
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_token_usage(prompt_tokens, completion_tokens, total_tokens)
             assert mock_print.called
@@ -226,7 +227,7 @@ class TestUIProper:
         version = "0.1.0"
         working_dir = "/test/path"
         context_loaded = True
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_welcome(version, working_dir, context_loaded, yolo_mode=True)
             assert mock_print.called
@@ -236,7 +237,7 @@ class TestUIProper:
         version = "0.1.0"
         working_dir = "/test/path"
         context_loaded = False
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_welcome(version, working_dir, context_loaded)
             assert mock_print.called
@@ -244,7 +245,7 @@ class TestUIProper:
     def test_ask_permission_variations(self):
         """Test permission asking with different inputs."""
         prompt = "Test permission"
-        
+
         test_cases = [
             ("y", "y"),
             ("yes", "y"),
@@ -253,7 +254,7 @@ class TestUIProper:
             ("always", "always"),
             ("a", "always"),
         ]
-        
+
         for input_value, expected in test_cases:
             with patch("rich.prompt.Prompt.ask", return_value=input_value):
                 result = ui.ask_permission(prompt)
@@ -263,7 +264,7 @@ class TestUIProper:
         """Test tool call printing with icon."""
         tool_name = "read_file"
         tool_input = {"path": "/test/file.txt"}
-        
+
         with patch.object(ui.console, "print") as mock_print:
             ui.print_tool_call(tool_name, tool_input)
             assert mock_print.called

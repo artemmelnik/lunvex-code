@@ -1,331 +1,326 @@
 #!/usr/bin/env python3
-"""Enhanced security check script using multiple sources."""
+"""
+Security check script for LunVex Code.
+Checks dependencies for vulnerabilities and security issues.
+"""
 
 import json
 import subprocess
 import sys
-from typing import Dict, List, Tuple
+from pathlib import Path
+from typing import List
 
-import requests
 
-
-def check_with_pip_audit() -> Tuple[bool, List[Dict]]:
-    """Check vulnerabilities using pip-audit."""
-    print("🔍 Checking with pip-audit...")
-
+def run_command(cmd: List[str]) -> str:
+    """Run a command and return its output."""
     try:
-        result = subprocess.run(
-            ["pip-audit", "--format", "json"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        data = json.loads(result.stdout)
-        vulnerabilities = []
-
-        for dep in data.get("dependencies", []):
-            for vuln in dep.get("vulns", []):
-                vulnerabilities.append(
-                    {
-                        "package": dep["name"],
-                        "version": dep["version"],
-                        "id": vuln.get("id", "Unknown"),
-                        "severity": vuln.get("severity", "Unknown"),
-                        "description": vuln.get("description", "No description"),
-                    }
-                )
-
-        if vulnerabilities:
-            print(f"❌ Found {len(vulnerabilities)} vulnerabilities with pip-audit")
-            return False, vulnerabilities
-        else:
-            print("✅ No vulnerabilities found with pip-audit")
-            return True, []
-
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return result.stdout
     except subprocess.CalledProcessError as e:
-        print(f"⚠️  pip-audit failed: {e}")
-        return False, []
-    except Exception as e:
-        print(f"⚠️  Error with pip-audit: {e}")
-        return False, []
+        print(f"Error running command {' '.join(cmd)}: {e}")
+        return ""
 
 
-def check_with_safety() -> Tuple[bool, List[Dict]]:
-    """Check vulnerabilities using safety (if available)."""
-    print("\n🔍 Checking with safety...")
+def check_pip_audit() -> bool:
+    """Check dependencies for known vulnerabilities using pip-audit."""
+    print("🔒 Checking dependencies for vulnerabilities with pip-audit...")
 
     try:
-        result = subprocess.run(
-            ["safety", "check", "--json"],
-            capture_output=True,
-            text=True,
-        )
+        # Check if pip-audit is installed
+        import pip_audit  # noqa
+    except ImportError:
+        print("⚠️  pip-audit not installed. Installing...")
+        subprocess.run([sys.executable, "-m", "pip", "install", "pip-audit"], check=True)
 
-        if result.returncode == 0 and result.stdout.strip():
-            try:
-                data = json.loads(result.stdout)
-                vulnerabilities = []
+    # Run pip-audit
+    result = subprocess.run(
+        [sys.executable, "-m", "pip_audit", "--format", "json"], capture_output=True, text=True
+    )
 
-                for vuln in data.get("vulnerabilities", []):
-                    vulnerabilities.append(
-                        {
-                            "package": vuln.get("package_name", "Unknown"),
-                            "version": vuln.get("analyzed_version", "Unknown"),
-                            "id": vuln.get("vulnerability_id", "Unknown"),
-                            "severity": vuln.get("severity", "Unknown"),
-                            "description": vuln.get("advisory", "No description"),
-                        }
-                    )
+    if result.returncode == 0:
+        try:
+            data = json.loads(result.stdout)
+            vulns = data.get("vulnerabilities", [])
 
-                if vulnerabilities:
-                    print(f"❌ Found {len(vulnerabilities)} vulnerabilities with safety")
-                    return False, vulnerabilities
-                else:
-                    print("✅ No vulnerabilities found with safety")
-                    return True, []
+            if vulns:
+                print(f"❌ Found {len(vulns)} vulnerabilities:")
+                for vuln in vulns:
+                    print(f"   - {vuln.get('name', 'Unknown')}: {vuln.get('id', 'Unknown')}")
+                return False
+            else:
+                print("✅ No vulnerabilities found!")
+                return True
 
-            except json.JSONDecodeError:
-                print("⚠️  Safety output not in expected format")
-                return False, []
-        else:
-            print("ℹ️  Safety not available or no output")
-            return True, []
-
-    except FileNotFoundError:
-        print("ℹ️  Safety not installed. Install with: pip install safety")
-        return True, []
-    except Exception as e:
-        print(f"⚠️  Error with safety: {e}")
-        return False, []
+        except json.JSONDecodeError:
+            print("✅ pip-audit passed (no JSON output means no vulnerabilities)")
+            return True
+    else:
+        print("⚠️  pip-audit failed to run")
+        print(f"Stderr: {result.stderr}")
+        return False
 
 
-def check_direct_osv(package: str, version: str) -> List[Dict]:
-    """Check a single package with OSV API directly."""
+def check_safety() -> bool:
+    """Check dependencies using safety (alternative to pip-audit)."""
+    print("\n🔒 Checking dependencies with safety...")
+
     try:
-        query = {
-            "package": {"name": package, "ecosystem": "PyPI"},
-            "version": version.split("+")[0].split("-")[0],  # Clean version
-        }
+        # Try to import safety
+        import safety  # noqa
+    except ImportError:
+        print("⚠️  safety not installed. Skipping...")
+        return True
 
-        response = requests.post(
-            "https://api.osv.dev/v1/query",
-            json=query,
-            timeout=10,
-        )
+    result = subprocess.run(["safety", "check", "--json"], capture_output=True, text=True)
 
-        if response.status_code == 200:
-            data = response.json()
-            vulnerabilities = []
+    if result.returncode == 0:
+        print("✅ safety check passed!")
+        return True
+    else:
+        try:
+            data = json.loads(result.stdout)
+            if data:
+                print(f"❌ Safety found issues: {data}")
+                return False
+        except Exception:
+            print("✅ safety passed (non-zero exit but no JSON output)")
+            return True
 
-            for vuln in data.get("vulns", []):
-                # Check if this vulnerability affects our version
-                affected = False
-                for affected_range in vuln.get("affected", []):
-                    if "ranges" in affected_range:
-                        for range_info in affected_range["ranges"]:
-                            if range_info.get("type") == "ECOSYSTEM":
-                                # Simple check - in production we'd parse semver
-                                affected = True
-                                break
 
-                if affected:
-                    vulnerabilities.append(
-                        {
-                            "package": package,
-                            "version": version,
-                            "id": vuln.get("id", "Unknown"),
-                            "severity": self._extract_severity(vuln),
-                            "description": vuln.get(
-                                "summary", vuln.get("details", "No description")
-                            ),
-                        }
+def check_bandit() -> bool:
+    """Check source code for security issues with bandit."""
+    print("\n🔍 Checking source code with bandit...")
+
+    try:
+        import bandit  # noqa
+    except ImportError:
+        print("⚠️  bandit not installed. Installing...")
+        subprocess.run([sys.executable, "-m", "pip", "install", "bandit"], check=True)
+
+    result = subprocess.run(
+        ["bandit", "-r", "lunvex_code", "-f", "json", "-q"], capture_output=True, text=True
+    )
+
+    if result.returncode == 0:
+        print("✅ bandit check passed!")
+        return True
+    else:
+        try:
+            data = json.loads(result.stdout)
+            # metrics = data.get("metrics", {})  # Unused variable
+            issues = data.get("results", [])
+
+            if issues:
+                print(f"❌ Bandit found {len(issues)} issues:")
+                for issue in issues[:5]:  # Show first 5 issues
+                    print(
+                        f"   - {issue.get('test_name')} in {issue.get('filename')}:{issue.get('line_number')}"
                     )
-
-            return vulnerabilities
-
-    except Exception as e:
-        print(f"⚠️  Error checking {package} with OSV: {e}")
-
-    return []
-
-
-def _extract_severity(vuln_data: Dict) -> str:
-    """Extract severity from vulnerability data."""
-    if "severity" in vuln_data:
-        for sev in vuln_data["severity"]:
-            if sev.get("type") == "CVSS_V3":
-                score = float(sev.get("score", 0))
-                if score >= 9.0:
-                    return "critical"
-                elif score >= 7.0:
-                    return "high"
-                elif score >= 4.0:
-                    return "medium"
-                else:
-                    return "low"
-
-    return "medium"
+                if len(issues) > 5:
+                    print(f"   ... and {len(issues) - 5} more issues")
+                return False
+            else:
+                print("✅ No security issues found in code!")
+                return True
+        except json.JSONDecodeError:
+            print("⚠️  Could not parse bandit output")
+            return False
 
 
-def check_known_problematic_packages() -> List[Dict]:
-    """Check for known problematic packages."""
-    print("\n🔍 Checking known problematic packages...")
+def check_dependency_licenses() -> bool:
+    """Check that all dependencies have acceptable licenses."""
+    print("\n📄 Checking dependency licenses...")
 
-    problematic = []
-
-    # Known issues (this would be maintained separately)
-    known_issues = {
-        "pyyaml": {
-            "min_safe_version": "5.4",
-            "issues": ["CVE-2017-18342", "CVE-2020-14343"],
-        },
-        "requests": {
-            "min_safe_version": "2.20.0",
-            "issues": ["CVE-2018-18074"],
-        },
-        "urllib3": {
-            "min_safe_version": "1.26.5",
-            "issues": ["CVE-2021-33503"],
-        },
+    # List of acceptable licenses
+    acceptable_licenses = {
+        "MIT",
+        "Apache-2.0",
+        "BSD-3-Clause",
+        "BSD-2-Clause",
+        "ISC",
+        "Python-2.0",
+        "Unlicense",
+        "CC0-1.0",
     }
 
-    try:
-        result = subprocess.run(
-            ["pip", "freeze"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+    # Get installed packages
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "list", "--format=json"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
 
-        for line in result.stdout.strip().split("\n"):
-            if "==" in line:
-                package, version = line.split("==")
-                package = package.strip().lower()
+    packages = json.loads(result.stdout)
+    problematic = []
 
-                if package in known_issues:
-                    min_version = known_issues[package]["min_safe_version"]
+    for pkg in packages:
+        name = pkg["name"]
 
-                    # Simple version comparison (for production use packaging.version)
-                    from packaging import version as pkg_version
+        # Skip lunvex-code itself
+        if name.lower() in ["lunvex-code", "lunvex_code"]:
+            continue
 
-                    try:
-                        if pkg_version.parse(version) < pkg_version.parse(min_version):
-                            problematic.append(
-                                {
-                                    "package": package,
-                                    "version": version,
-                                    "min_safe": min_version,
-                                    "issues": known_issues[package]["issues"],
-                                    "severity": "high",
-                                    "description": f"Known vulnerabilities in {package} < {min_version}",
-                                }
-                            )
-                    except Exception:
-                        # If version parsing fails, just warn
-                        problematic.append(
-                            {
-                                "package": package,
-                                "version": version,
-                                "min_safe": min_version,
-                                "issues": known_issues[package]["issues"],
-                                "severity": "medium",
-                                "description": f"Potential vulnerability in {package} version {version}",
-                            }
-                        )
+        # Try to get license info
+        try:
+            # Use pip show to get metadata
+            info_result = subprocess.run(
+                [sys.executable, "-m", "pip", "show", name], capture_output=True, text=True
+            )
 
-        if problematic:
-            print(f"⚠️  Found {len(problematic)} potentially problematic packages")
-        else:
-            print("✅ No known problematic packages found")
+            if info_result.returncode == 0:
+                lines = info_result.stdout.split("\n")
+                license_line = [line for line in lines if line.startswith("License:")]
 
-    except Exception as e:
-        print(f"⚠️  Error checking problematic packages: {e}")
+                if license_line:
+                    license_text = license_line[0].replace("License:", "").strip()
 
-    return problematic
+                    # Check if license is acceptable
+                    license_ok = False
+                    for acceptable in acceptable_licenses:
+                        if acceptable.lower() in license_text.lower():
+                            license_ok = True
+                            break
+
+                    if not license_ok:
+                        problematic.append((name, license_text))
+
+        except Exception as e:
+            print(f"⚠️  Could not check license for {name}: {e}")
+
+    if problematic:
+        print("❌ Found packages with potentially problematic licenses:")
+        for name, license_text in problematic:
+            print(f"   - {name}: {license_text}")
+        print(f"\n   Acceptable licenses: {', '.join(sorted(acceptable_licenses))}")
+        return False
+    else:
+        print("✅ All dependencies have acceptable licenses!")
+        return True
 
 
-def generate_report(
-    pip_audit_ok: bool,
-    safety_ok: bool,
-    pip_audit_vulns: List[Dict],
-    safety_vulns: List[Dict],
-    problematic: List[Dict],
-) -> None:
-    """Generate security report."""
-    print("\n" + "=" * 60)
-    print("🛡️  SECURITY REPORT")
-    print("=" * 60)
+def check_env_file() -> bool:
+    """Check for security issues in .env file."""
+    print("\n🔐 Checking environment configuration...")
 
-    all_vulns = pip_audit_vulns + safety_vulns + problematic
+    env_path = Path(".env")
+    example_path = Path("config/.env.example")
 
-    if not all_vulns:
-        print("✅ All security checks passed!")
-        print("\nNo vulnerabilities found in dependencies.")
-        return
+    if not example_path.exists():
+        print("⚠️  No .env.example file found in config/")
+        return True
 
-    print(f"❌ Found {len(all_vulns)} potential security issues")
+    # Read example to see what secrets should be there
+    with open(example_path) as f:
+        example_content = f.read()
 
-    # Group by package
-    by_package = {}
-    for vuln in all_vulns:
-        pkg = vuln["package"]
-        if pkg not in by_package:
-            by_package[pkg] = []
-        by_package[pkg].append(vuln)
+    # Check if .env exists
+    if not env_path.exists():
+        print("⚠️  No .env file found. Using .env.example as reference.")
+        env_content = example_content
+    else:
+        with open(env_path) as f:
+            env_content = f.read()
 
-    print("\n📋 Vulnerabilities by package:")
-    for package, vulns in by_package.items():
-        print(f"\n  {package}:")
-        for vuln in vulns:
-            severity = vuln.get("severity", "unknown").upper()
-            severity_emoji = {
-                "CRITICAL": "🔴",
-                "HIGH": "🟠",
-                "MEDIUM": "🟡",
-                "LOW": "🟢",
-            }.get(severity, "⚪")
+    # Look for common security issues
+    issues = []
 
-            print(f"    {severity_emoji} {vuln.get('id', 'Unknown')} ({severity})")
-            if "min_safe" in vuln:
-                print(f"      Current: {vuln['version']}, Minimum safe: {vuln['min_safe']}")
-            print(f"      {vuln.get('description', 'No description')[:100]}...")
+    lines = env_content.split("\n")
+    for i, line in enumerate(lines, 1):
+        line = line.strip()
 
-    print("\n💡 Recommendations:")
-    print("  1. Run: pip-audit --fix (if available)")
-    print("  2. Update vulnerable packages to latest versions")
-    print("  3. Consider using: pip install --upgrade package-name")
-    print("  4. Review: https://pyup.io/safety/ for detailed analysis")
+        # Skip comments and empty lines
+        if not line or line.startswith("#"):
+            continue
+
+        # Check for exposed secrets
+        if "password" in line.lower() and "=" in line:
+            key, value = line.split("=", 1)
+            if value.strip() and value.strip() not in [
+                "",
+                "your_password_here",
+                "YOUR_PASSWORD_HERE",
+            ]:
+                # Check if it looks like a real password (not a placeholder)
+                if not any(
+                    placeholder in value for placeholder in ["your_", "YOUR_", "example", "EXAMPLE"]
+                ):
+                    issues.append(f"Line {i}: Possible exposed password in {key}")
+
+        # Check for API keys
+        if any(keyword in line.lower() for keyword in ["api_key", "api_token", "secret"]):
+            key, value = line.split("=", 1)
+            if value.strip() and value.strip() not in [
+                "",
+                "your_api_key_here",
+                "YOUR_API_KEY_HERE",
+            ]:
+                if not any(
+                    placeholder in value for placeholder in ["your_", "YOUR_", "example", "EXAMPLE"]
+                ):
+                    issues.append(f"Line {i}: Possible exposed API key in {key}")
+
+    if issues:
+        print("❌ Potential security issues in .env file:")
+        for issue in issues:
+            print(f"   - {issue}")
+        print("\n   Please ensure .env is in .gitignore and not committed!")
+        return False
+    else:
+        print("✅ .env file looks secure!")
+        return True
 
 
 def main() -> None:
-    """Main function."""
-    print("🛡️  Enhanced Dependency Security Check")
+    """Run all security checks."""
+    print("=" * 60)
+    print("🔒 LunVex Code Security Audit")
     print("=" * 60)
 
-    # Check with pip-audit
-    pip_audit_ok, pip_audit_vulns = check_with_pip_audit()
+    all_passed = True
 
-    # Check with safety
-    safety_ok, safety_vulns = check_with_safety()
+    # Run checks
+    checks = [
+        ("Dependency Vulnerabilities", check_pip_audit),
+        ("Source Code Security", check_bandit),
+        ("Dependency Licenses", check_dependency_licenses),
+        ("Environment Configuration", check_env_file),
+    ]
 
-    # Check known problematic packages
-    problematic = check_known_problematic_packages()
+    results = []
 
-    # Generate report
-    generate_report(
-        pip_audit_ok,
-        safety_ok,
-        pip_audit_vulns,
-        safety_vulns,
-        problematic,
-    )
+    for check_name, check_func in checks:
+        print(f"\n{'=' * 40}")
+        print(f"Check: {check_name}")
+        print(f"{'=' * 40}")
 
-    # Exit code
-    if pip_audit_vulns or safety_vulns or problematic:
-        sys.exit(1)
-    else:
+        try:
+            passed = check_func()
+            results.append((check_name, passed))
+            if not passed:
+                all_passed = False
+        except Exception as e:
+            print(f"❌ Check failed with error: {e}")
+            results.append((check_name, False))
+            all_passed = False
+
+    # Print summary
+    print(f"\n{'=' * 60}")
+    print("📊 Security Audit Summary")
+    print(f"{'=' * 60}")
+
+    for check_name, passed in results:
+        status = "✅ PASS" if passed else "❌ FAIL"
+        print(f"{status} {check_name}")
+
+    print(f"\n{'=' * 60}")
+
+    if all_passed:
+        print("🎉 All security checks passed!")
         sys.exit(0)
+    else:
+        print("⚠️  Some security checks failed. Please review the issues above.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

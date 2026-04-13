@@ -1,8 +1,7 @@
 """Async agent implementation."""
 
-import asyncio
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from . import ui
 from .context import ProjectContext, build_system_prompt
@@ -52,21 +51,31 @@ class AsyncAgent:
 
     def _create_default_registry(self) -> ToolRegistry:
         """Create default async tool registry."""
-        from .tools.base import ToolRegistry
-        
-        # Import async tools
-        from .tools.async_file_tools import AsyncReadFileTool, AsyncWriteFileTool, AsyncEditFileTool
-        from .tools.async_search_tools import AsyncGlobTool, AsyncGrepTool
         from .tools.async_bash_tool import AsyncBashTool
+
+        # Import async tools
+        from .tools.async_file_tools import AsyncEditFileTool, AsyncReadFileTool, AsyncWriteFileTool
+        from .tools.async_search_tools import AsyncGlobTool, AsyncGrepTool
         from .tools.async_web_tools import AsyncFetchURLTool
+        from .tools.base import ToolRegistry
         from .tools.git_tools import (
-            GitStatusTool, GitDiffTool, GitLogTool, GitShowTool, GitBranchTool,
-            GitAddTool, GitCommitTool, GitPushTool, GitPullTool, GitStashTool,
-            GitCheckoutTool, GitMergeTool, GitFetchTool
+            GitAddTool,
+            GitBranchTool,
+            GitCheckoutTool,
+            GitCommitTool,
+            GitDiffTool,
+            GitFetchTool,
+            GitLogTool,
+            GitMergeTool,
+            GitPullTool,
+            GitPushTool,
+            GitShowTool,
+            GitStashTool,
+            GitStatusTool,
         )
-        
+
         registry = ToolRegistry()
-        
+
         # Register async tools
         registry.register(AsyncReadFileTool())
         registry.register(AsyncWriteFileTool())
@@ -75,7 +84,7 @@ class AsyncAgent:
         registry.register(AsyncGrepTool())
         registry.register(AsyncBashTool())
         registry.register(AsyncFetchURLTool())
-        
+
         # Register sync Git tools (they're fast enough)
         registry.register(GitStatusTool())
         registry.register(GitDiffTool())
@@ -90,7 +99,7 @@ class AsyncAgent:
         registry.register(GitCheckoutTool())
         registry.register(GitMergeTool())
         registry.register(GitFetchTool())
-        
+
         return registry
 
     def _get_permission(self, request: PermissionRequest) -> bool:
@@ -179,7 +188,7 @@ class AsyncAgent:
         for tc in tool_calls:
             # Show tool call
             ui.print_tool_call(tc.name, tc.arguments)
-            
+
             # Create task for tool execution
             task = self._execute_tool(tc)
             tasks.append((tc, task))
@@ -187,7 +196,7 @@ class AsyncAgent:
         # Execute all tasks
         for tc, task in tasks:
             result = await task
-            
+
             # Show result (truncated)
             success = not result.startswith("Error")
             ui.print_tool_result(result, success=success)
@@ -275,54 +284,55 @@ class AsyncAgent:
         # Check if we should use task planning
         if use_planning and await self._should_use_planning(task):
             return await self._run_with_planning(task)
-        
+
         # Use standard execution
         return await self._run_standard(task)
-    
+
     async def _should_use_planning(self, task: str) -> bool:
         """
         Determine if task planning should be used.
-        
+
         Can be overridden for custom logic.
         """
         # Simple heuristic: use planning for complex tasks
         from .task_planner import TaskPlanner
+
         planner = TaskPlanner(self.client, self.registry, self.context.working_dir)
         return planner._is_complex_task(task)
-    
+
     async def _run_with_planning(self, task: str) -> str:
         """
         Run task with automatic decomposition into subtasks.
         """
         from . import ui
         from .task_planner import TaskPlanner
-        
+
         ui.print_info("🔍 Analyzing task complexity...")
-        
+
         # Create task planner
         planner = TaskPlanner(self.client, self.registry, self.context.working_dir)
-        
+
         # Create task plan
         ui.print_info("📋 Creating task plan...")
         plan = planner.create_task_plan(task)
-        
+
         ui.print_success(f"✅ Created plan with {len(plan.subtasks)} subtasks")
-        
+
         # Display plan
         self._display_task_plan(plan)
-        
+
         # Execute plan
         ui.print_info("🚀 Executing task plan...")
         result = await planner.execute_plan_async(plan, self)
-        
+
         return result
-    
+
     async def _run_standard(self, task: str) -> str:
         """
         Run task using standard agent loop.
         """
         from . import ui
-        
+
         # Add initial task
         self.history.add_user_message(task)
 
@@ -337,29 +347,31 @@ class AsyncAgent:
         # Max turns reached
         ui.print_warning(f"Reached maximum turns ({self.config.max_turns})")
         return "Task incomplete - maximum turns reached."
-    
+
     def _display_task_plan(self, plan):
         """Display the task plan to user."""
         from . import ui
-        
+
         ui.print_section("📋 Task Execution Plan")
         ui.print_info(f"Original task: {plan.original_task}")
         ui.print_info(f"Number of subtasks: {len(plan.subtasks)}")
-        
+
         for i, subtask_id in enumerate(plan.execution_order, 1):
             subtask = next(st for st in plan.subtasks if st.id == subtask_id)
             deps = ", ".join(subtask.dependencies) if subtask.dependencies else "none"
             ui.print_info(f"{i}. {subtask.id}: {subtask.description}")
             ui.print_info(f"   Dependencies: {deps}")
-            ui.print_info(f"   Files: {', '.join(subtask.context_files[:3])}" + 
-                         ("..." if len(subtask.context_files) > 3 else ""))
+            ui.print_info(
+                f"   Files: {', '.join(subtask.context_files[:3])}"
+                + ("..." if len(subtask.context_files) > 3 else "")
+            )
 
     async def arun(self, task: str, use_planning: bool = True) -> str:
         """
         Alias for async run method.
         """
         return await self.run(task, use_planning)
-    
+
     async def chat(self, message: str) -> str:
         """
         Send a chat message and get response asynchronously (for interactive mode).

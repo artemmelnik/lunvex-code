@@ -3,9 +3,8 @@
 import re
 from pathlib import Path
 
-from ..progress import spinner
 from .base import Tool, ToolResult
-from .progress_decorators import with_search_progress, ProgressAwareMixin
+from .progress_decorators import ProgressAwareMixin, with_search_progress
 
 
 class GlobTool(Tool, ProgressAwareMixin):
@@ -61,17 +60,17 @@ class GlobTool(Tool, ProgressAwareMixin):
 
             matches = []
             total_scanned = 0
-            
+
             self._update_progress(0.1, "Starting search...")
 
             # Use pathlib's glob for pattern matching
             for i, match in enumerate(base_path.glob(pattern)):
                 total_scanned += 1
-                
+
                 # Update progress every 100 files
                 if i % 100 == 0:
                     self._update_progress(min(0.9, i / 1000), f"Scanned {i} files...")
-                
+
                 # Skip directories we don't care about
                 parts = match.parts
                 if any(skip in parts for skip in self.SKIP_DIRS):
@@ -87,7 +86,7 @@ class GlobTool(Tool, ProgressAwareMixin):
 
                 if len(matches) >= limit:
                     break
-            
+
             self._update_progress(0.9, f"Found {len(matches)} matches, sorting...")
 
             # Sort by modification time (most recent first)
@@ -230,7 +229,7 @@ class GrepTool(Tool, ProgressAwareMixin):
 
             matches = []
             files_searched = 0
-            
+
             self._update_progress(0.1, "Finding files to search...")
 
             # Get files to search
@@ -239,17 +238,19 @@ class GrepTool(Tool, ProgressAwareMixin):
             else:
                 # Use glob to find files
                 files_to_search = list(base_path.glob(f"**/{include}"))
-            
+
             self._update_progress(0.3, f"Found {len(files_to_search)} files to search")
 
             for i, file_path in enumerate(files_to_search):
                 files_searched += 1
-                
+
                 # Update progress every 10 files
                 if i % 10 == 0:
                     progress = 0.3 + (i / len(files_to_search)) * 0.6
-                    self._update_progress(progress, f"Searching file {i+1}/{len(files_to_search)}...")
-                
+                    self._update_progress(
+                        progress, f"Searching file {i + 1}/{len(files_to_search)}..."
+                    )
+
                 if not file_path.is_file():
                     continue
 

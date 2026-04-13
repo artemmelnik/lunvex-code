@@ -28,7 +28,7 @@ class TestVulnerabilityScanner(unittest.TestCase):
         """Test scanning an empty list of dependencies."""
         scanner = VulnerabilityScanner()
         result = scanner.scan_dependencies([])
-        
+
         assert result is not None
         assert hasattr(result, "dependencies_scanned")
         assert hasattr(result, "vulnerabilities_found")
@@ -41,9 +41,9 @@ class TestVulnerabilityScanner(unittest.TestCase):
             name="requests",
             version="2.33.1",
             ecosystem=Ecosystem.PYTHON,
-            dep_type=DependencyType.PRODUCTION
+            dep_type=DependencyType.PRODUCTION,
         )
-        
+
         assert dep.name == "requests"
         assert dep.version == "2.33.1"
         assert dep.ecosystem == Ecosystem.PYTHON
@@ -57,9 +57,9 @@ class TestVulnerabilityScanner(unittest.TestCase):
             description="Test vulnerability",
             affected_versions="<2.33.0",
             fixed_versions=["2.33.0", "2.33.1"],
-            references=["https://example.com/cve"]
+            references=["https://example.com/cve"],
         )
-        
+
         assert vuln.id == "CVE-2024-12345"
         assert vuln.severity == "medium"
         assert vuln.description == "Test vulnerability"
@@ -85,20 +85,18 @@ class TestVulnerabilityScanner(unittest.TestCase):
         # Mock the API response
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "vulns": []
-        }
+        mock_response.json.return_value = {"vulns": []}
         mock_get.return_value = mock_response
-        
+
         scanner = FixedVulnerabilityScanner()
-        
+
         dep = Dependency(
             name="requests",
             version="2.33.1",
             ecosystem=Ecosystem.PYTHON,
-            dep_type=DependencyType.PRODUCTION
+            dep_type=DependencyType.PRODUCTION,
         )
-        
+
         # This should not raise an exception
         vulnerabilities = scanner._scan_dependency(dep)
         assert isinstance(vulnerabilities, list)
@@ -106,14 +104,14 @@ class TestVulnerabilityScanner(unittest.TestCase):
     def test_vulnerability_severity_levels(self):
         """Test vulnerability severity levels."""
         severities = ["low", "medium", "high", "critical"]
-        
+
         for severity in severities:
             vuln = Vulnerability(
                 id=f"TEST-{severity}",
                 severity=severity,
                 description=f"Test {severity} vulnerability",
                 affected_versions="*",
-                fixed_versions=["1.0.0"]
+                fixed_versions=["1.0.0"],
             )
             assert vuln.severity == severity
 
@@ -123,9 +121,9 @@ class TestVulnerabilityScanner(unittest.TestCase):
             name="requests",
             version="2.33.1",
             ecosystem=Ecosystem.PYTHON,
-            dep_type=DependencyType.PRODUCTION
+            dep_type=DependencyType.PRODUCTION,
         )
-        
+
         dep_dict = dep.to_dict()
         assert isinstance(dep_dict, dict)
         assert dep_dict["name"] == "requests"
@@ -140,9 +138,9 @@ class TestVulnerabilityScanner(unittest.TestCase):
             description="Test vulnerability",
             affected_versions="<2.33.0",
             fixed_versions=["2.33.0", "2.33.1"],
-            references=["https://example.com/cve"]
+            references=["https://example.com/cve"],
         )
-        
+
         assert vuln.id == "CVE-2024-12345"
         assert vuln.severity == "medium"
         assert vuln.description == "Test vulnerability"
@@ -153,4 +151,5 @@ class TestVulnerabilityScanner(unittest.TestCase):
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

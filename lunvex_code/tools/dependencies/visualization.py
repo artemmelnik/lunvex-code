@@ -6,6 +6,7 @@ from typing import Optional
 
 from lunvex_code.dependencies import DependencyAnalyzer
 from lunvex_code.dependencies.visualizer import DependencyVisualizer
+
 from ..base import Tool, ToolResult
 
 

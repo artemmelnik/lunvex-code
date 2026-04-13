@@ -74,6 +74,11 @@ venv.bak/
 # Project specific
 *.log
 
+# Configuration (except example files)
+config/.env
+config/*.secret
+config/*.token
+
 # PyPI tokens and secrets
 .pypi.env
 *.token

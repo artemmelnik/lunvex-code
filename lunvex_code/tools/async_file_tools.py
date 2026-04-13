@@ -1,14 +1,12 @@
 """Async file operation tools: read, write, edit."""
 
 import asyncio
-import os
 from pathlib import Path
 from typing import Optional
 
 from ..cache import read_file_with_cache
-from ..progress import spinner
 from .async_base import AsyncTool, AsyncToolResult
-from .progress_decorators import with_file_progress, ProgressAwareMixin
+from .progress_decorators import ProgressAwareMixin
 
 
 class AsyncReadFileTool(AsyncTool, ProgressAwareMixin):
@@ -36,7 +34,9 @@ class AsyncReadFileTool(AsyncTool, ProgressAwareMixin):
         },
     }
 
-    async def execute(self, path: str, limit: Optional[int] = None, offset: int = 1) -> AsyncToolResult:
+    async def execute(
+        self, path: str, limit: Optional[int] = None, offset: int = 1
+    ) -> AsyncToolResult:
         try:
             # Expand user path and resolve
             file_path = Path(path).expanduser().resolve()
@@ -81,7 +81,11 @@ class AsyncReadFileTool(AsyncTool, ProgressAwareMixin):
 
             return AsyncToolResult(
                 success=True,
-                output=f"Contents of {path}{cache_indicator}:\n{formatted_content}" if formatted_content else f"{path} is empty{cache_indicator}",
+                output=(
+                    f"Contents of {path}{cache_indicator}:\n{formatted_content}"
+                    if formatted_content
+                    else f"{path} is empty{cache_indicator}"
+                ),
             )
 
         except PermissionError:
@@ -126,14 +130,13 @@ class AsyncWriteFileTool(AsyncTool, ProgressAwareMixin):
 
             # Write the file asynchronously
             loop = asyncio.get_event_loop()
-            await loop.run_in_executor(
-                None, self._write_file_sync, file_path, content
-            )
+            await loop.run_in_executor(None, self._write_file_sync, file_path, content)
 
             self._update_progress(0.8, "Updating cache...")
 
             # Invalidate cache for this file
             from ..cache import get_file_cache
+
             cache = get_file_cache()
             cache.invalidate(file_path)
 
@@ -197,9 +200,7 @@ class AsyncEditFileTool(AsyncTool, ProgressAwareMixin):
 
             # Read current content asynchronously
             loop = asyncio.get_event_loop()
-            content = await loop.run_in_executor(
-                None, self._read_file_sync, file_path
-            )
+            content = await loop.run_in_executor(None, self._read_file_sync, file_path)
 
             self._update_progress(0.6, "Finding string...")
 
@@ -224,14 +225,13 @@ class AsyncEditFileTool(AsyncTool, ProgressAwareMixin):
             new_content = content.replace(old_str, new_str)
 
             # Write back asynchronously
-            await loop.run_in_executor(
-                None, self._write_file_sync, file_path, new_content
-            )
+            await loop.run_in_executor(None, self._write_file_sync, file_path, new_content)
 
             self._update_progress(0.9, "Updating cache...")
 
             # Invalidate cache for this file
             from ..cache import get_file_cache
+
             cache = get_file_cache()
             cache.invalidate(file_path)
 

@@ -22,14 +22,56 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 # Install development dependencies
 pip install -e .[dev]
 
-# Set up pre-commit hooks (optional)
-pre-commit install
+# Set up pre-commit hooks (recommended)
+./scripts/setup_pre_commit.sh
 ```
 
 ### Configuration
 Create a `.env` file in the project root:
 ```bash
 DEEPSEEK_API_KEY=your_api_key_here
+```
+
+## Code Quality
+
+### Pre-commit Hooks
+LunVex Code uses pre-commit hooks to ensure code quality. The hooks run automatically on every commit and check:
+
+1. **Code formatting** (ruff-format, black)
+2. **Linting** (ruff with auto-fix)
+3. **File hygiene** (trailing whitespace, end-of-file newlines)
+4. **Configuration validation** (YAML, TOML)
+5. **Smoke tests** (basic functionality tests)
+
+To set up:
+```bash
+./scripts/setup_pre_commit.sh
+```
+
+To run manually:
+```bash
+pre-commit run --all-files
+```
+
+### Code Style
+- **Line length**: 100 characters
+- **Quotes**: Double quotes for strings
+- **Import sorting**: Ruff organizes imports
+- **Type hints**: Required for public APIs
+
+### Running Quality Checks
+```bash
+# Format code
+ruff format lunvex_code/ tests/
+
+# Lint and auto-fix
+ruff check --fix lunvex_code/ tests/
+
+# Run all tests
+pytest tests/ -v
+
+# Run with coverage
+pytest --cov=lunvex_code tests/
 ```
 
 ## Project Structure
@@ -90,7 +132,7 @@ class MyCustomTool(Tool):
             "required": True
         },
         "param2": {
-            "type": "integer", 
+            "type": "integer",
             "description": "Description of parameter 2",
             "required": False
         }
@@ -149,7 +191,7 @@ class CalculatorTool(Tool):
         operation = kwargs["operation"]
         a = kwargs["a"]
         b = kwargs["b"]
-        
+
         try:
             if operation == "add":
                 result = a + b
@@ -163,7 +205,7 @@ class CalculatorTool(Tool):
                 result = a / b
             else:
                 return ToolResult(success=False, output=f"Unknown operation: {operation}")
-            
+
             return ToolResult(success=True, output=f"Result: {result}")
         except Exception as e:
             return ToolResult(success=False, output=str(e), error=str(e))
@@ -187,16 +229,16 @@ from typing import Optional, Dict, Any
 
 class TimeBasedRule(PermissionRule):
     """Restrict operations during business hours."""
-    
+
     def __init__(self, business_hours_start=9, business_hours_end=17):
         self.start = business_hours_start
         self.end = business_hours_end
-    
+
     def check(self, tool_name: str, tool_input: Dict[str, Any]) -> Optional[PermissionLevel]:
         from datetime import datetime
-        
+
         current_hour = datetime.now().hour
-        
+
         if self.start <= current_hour <= self.end:
             # During business hours, restrict dangerous operations
             if tool_name == "bash":
@@ -206,14 +248,14 @@ class TimeBasedRule(PermissionRule):
                     r"shutdown",
                     r"reboot",
                 ]
-                
+
                 for pattern in dangerous_patterns:
                     import re
                     if re.search(pattern, command, re.IGNORECASE):
                         return PermissionLevel.DENY
-        
+
         return None
-    
+
     def get_reason(self) -> Optional[str]:
         return "Business hours restriction"
 ```
@@ -292,17 +334,17 @@ class TestMyCustomTool:
         result = tool.execute(param1="value1", param2=42)
         assert result.success is True
         assert "expected output" in result.output
-    
+
     def test_tool_failure(self):
         tool = MyCustomTool()
         result = tool.execute(param1="invalid")
         assert result.success is False
         assert result.error is not None
-    
+
     @pytest.fixture
     def sample_data(self):
         return {"key": "value"}
-    
+
     def test_with_fixture(self, sample_data):
         tool = MyCustomTool()
         result = tool.execute(**sample_data)
@@ -321,11 +363,11 @@ class TestLLMClient:
         mock_response = Mock()
         mock_response.choices = [Mock(message=Mock(content="Mock response"))]
         mock_openai.return_value.chat.completions.create.return_value = mock_response
-        
+
         # Test
         client = LunVexClient(api_key="test")
         response = client.complete("test prompt")
-        
+
         assert response.content == "Mock response"
 ```
 
@@ -522,11 +564,11 @@ def execute(self, **kwargs) -> ToolResult:
     path = kwargs.get("path")
     if not path:
         return ToolResult(success=False, error="Path is required")
-    
+
     # Prevent path traversal
     if ".." in path or path.startswith("/"):
         return ToolResult(success=False, error="Invalid path")
-    
+
     # Rest of implementation...
 ```
 
@@ -539,11 +581,11 @@ def execute_safe_command(command):
     # Validate command
     if any(dangerous in command for dangerous in ["rm -rf", "sudo", "| sh"]):
         raise ValueError("Dangerous command detected")
-    
+
     # Use shell=False and explicit arguments
     args = shlex.split(command)
     result = subprocess.run(args, capture_output=True, text=True, timeout=30)
-    
+
     return result
 ```
 
@@ -596,10 +638,10 @@ subprocess.run(command, env=env, ...)
 class MyPlugin:
     def get_tools(self):
         return [MyCustomTool()]
-    
+
     def get_permission_rules(self):
         return [MyPermissionRule()]
-    
+
     def initialize(self, context):
         # Plugin initialization
         pass
@@ -613,7 +655,7 @@ class CustomLLMClient(BaseLLMClient):
     def complete(self, messages, tools=None):
         # Custom implementation
         pass
-    
+
     def complete_with_tools(self, messages, tools):
         # Custom implementation
         pass

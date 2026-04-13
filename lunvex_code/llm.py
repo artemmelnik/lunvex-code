@@ -173,7 +173,7 @@ class LunVexClient:
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
-            
+
             if cached_result is not None:
                 response_data, from_cache = cached_result
                 if from_cache:
@@ -181,16 +181,13 @@ class LunVexClient:
                     return LLMResponse(
                         content=response_data.get("content"),
                         tool_calls=[
-                            ToolCall(
-                                id=tc["id"],
-                                name=tc["name"],
-                                arguments=tc["arguments"]
-                            ) for tc in response_data.get("tool_calls", [])
+                            ToolCall(id=tc["id"], name=tc["name"], arguments=tc["arguments"])
+                            for tc in response_data.get("tool_calls", [])
                         ],
                         finish_reason=response_data.get("finish_reason", "stop"),
                         usage=response_data.get("usage", {}),
                     )
-        
+
         kwargs: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
@@ -217,10 +214,10 @@ class LunVexClient:
 
         choice = response.choices[0]
         message = choice.message
-        
+
         # Parse tool calls
         tool_calls = self._parse_tool_calls(message.tool_calls)
-        
+
         # Create response object
         llm_response = LLMResponse(
             content=message.content,
@@ -228,7 +225,7 @@ class LunVexClient:
             finish_reason=choice.finish_reason or "stop",
             usage=usage,
         )
-        
+
         # Cache the response
         if use_cache:
             cache = get_llm_cache()
@@ -236,16 +233,12 @@ class LunVexClient:
             response_data = {
                 "content": message.content,
                 "tool_calls": [
-                    {
-                        "id": tc.id,
-                        "name": tc.name,
-                        "arguments": tc.arguments
-                    } for tc in tool_calls
+                    {"id": tc.id, "name": tc.name, "arguments": tc.arguments} for tc in tool_calls
                 ],
                 "finish_reason": choice.finish_reason or "stop",
                 "usage": usage,
             }
-            
+
             cache.put(
                 model=self.model,
                 messages=messages,

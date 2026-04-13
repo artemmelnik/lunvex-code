@@ -4,8 +4,9 @@ import json
 from pathlib import Path
 
 from lunvex_code.dependencies import DependencyAnalyzer
+
 from ..base import Tool, ToolResult
-from ..progress_decorators import with_dependency_progress, ProgressAwareMixin
+from ..progress_decorators import ProgressAwareMixin, with_dependency_progress
 
 
 class AnalyzeDependenciesTool(Tool, ProgressAwareMixin):

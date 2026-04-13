@@ -2,19 +2,19 @@
 
 import tempfile
 from pathlib import Path
-
-from lunvex_code.tools.file_tools import ReadFileTool, WriteFileTool, EditFileTool
-from lunvex_code.tools.search_tools import GlobTool, GrepTool
-from lunvex_code.tools.bash_tool import BashTool
-from lunvex_code.agent import Agent, AgentConfig
-from lunvex_code.llm import LunVexClient
-from lunvex_code.context import ProjectContext
 from unittest.mock import MagicMock
+
+from lunvex_code.agent import Agent, AgentConfig
+from lunvex_code.context import ProjectContext
+from lunvex_code.llm import LunVexClient
+from lunvex_code.tools.bash_tool import BashTool
+from lunvex_code.tools.file_tools import ReadFileTool, WriteFileTool
+from lunvex_code.tools.search_tools import GrepTool
 
 
 def test_smoke_file_operations():
     """Smoke test: basic file operations."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         f.write("Smoke test content\nLine 2\nLine 3")
         temp_file = f.name
 
@@ -41,8 +41,7 @@ def test_smoke_write_and_read():
         # Write file
         write_tool = WriteFileTool()
         write_result = write_tool.execute(
-            path=str(test_file),
-            content="Smoke test write content\nWith multiple lines"
+            path=str(test_file), content="Smoke test write content\nWith multiple lines"
         )
 
         assert write_result.success
@@ -69,11 +68,7 @@ def test_smoke_search():
         (tmpdir_path / "file3.txt").write_text("Another Search term\nMore content")
 
         tool = GrepTool()
-        result = tool.execute(
-            pattern="Search term",
-            path=str(tmpdir_path),
-            include="*.txt"
-        )
+        result = tool.execute(pattern="Search term", path=str(tmpdir_path), include="*.txt")
 
         assert result.success
         assert "file1.txt" in result.output
@@ -99,8 +94,6 @@ def test_smoke_bash():
 def test_smoke_agent_import():
     """Smoke test: agent imports."""
     # Test that we can import all agent components
-    from lunvex_code.agent import Agent, AgentConfig
-    from lunvex_code.cli import create_and_run_agent
 
     # Create mock components
     mock_client = MagicMock(spec=LunVexClient)
@@ -110,11 +103,7 @@ def test_smoke_agent_import():
 
     # Create agent instance
     config = AgentConfig(max_turns=10, trust_mode=True)
-    agent = Agent(
-        client=mock_client,
-        context=mock_context,
-        config=config
-    )
+    agent = Agent(client=mock_client, context=mock_context, config=config)
 
     assert agent is not None
     assert agent.config.max_turns == 10
@@ -125,21 +114,17 @@ def test_smoke_agent_import():
 
 def test_smoke_tool_registry():
     """Smoke test: tool registry."""
-    from lunvex_code.agent import Agent, AgentConfig
     from unittest.mock import MagicMock
-    from lunvex_code.llm import LunVexClient
+
     from lunvex_code.context import ProjectContext
+    from lunvex_code.llm import LunVexClient
 
     mock_client = MagicMock(spec=LunVexClient)
     mock_context = MagicMock(spec=ProjectContext)
     mock_context.working_dir = "."
     mock_context.project_md = None
 
-    agent = Agent(
-        client=mock_client,
-        context=mock_context,
-        config=AgentConfig()
-    )
+    agent = Agent(client=mock_client, context=mock_context, config=AgentConfig())
 
     # Check registry was created
     assert agent.registry is not None
@@ -148,9 +133,16 @@ def test_smoke_tool_registry():
     tool_names = [tool.name for tool in agent.registry._tools.values()]
 
     required_tools = [
-        "read_file", "write_file", "edit_file",
-        "glob", "grep", "bash", "fetch_url",
-        "git_status", "git_diff", "git_log"
+        "read_file",
+        "write_file",
+        "edit_file",
+        "glob",
+        "grep",
+        "bash",
+        "fetch_url",
+        "git_status",
+        "git_diff",
+        "git_log",
     ]
 
     for tool_name in required_tools:
@@ -188,10 +180,11 @@ def run_all_smoke_tests():
         except Exception as e:
             print(f"❌ {test.__name__}: FAILED - {e}")
             import traceback
+
             traceback.print_exc()
             failed += 1
 
-    print(f"\n" + "=" * 70)
+    print("\n" + "=" * 70)
     print(f"SMOKE TEST SUMMARY: {passed} passed, {failed} failed")
     print("=" * 70)
 
@@ -206,6 +199,6 @@ def run_all_smoke_tests():
 if __name__ == "__main__":
     """Run all smoke tests."""
     import sys
-    
+
     success = run_all_smoke_tests()
     sys.exit(0 if success else 1)

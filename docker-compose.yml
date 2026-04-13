@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  lunvex-code:
+    build: .
+    image: lunvex-code:dev
+    container_name: lunvex-code
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - LUNVEX_CACHE_MAX_SIZE=100
+      - LUNVEX_CACHE_TTL_SECONDS=300
+      - LUNVEX_LLM_CACHE_MAX_SIZE=100
+      - LUNVEX_LLM_CACHE_TTL_SECONDS=3600
+    volumes:
+      # Mount current directory for development
+      - .:/home/lunvex/app
+      # Mount home directory for configuration and cache
+      - ./data/.lunvex-code:/home/lunvex/.lunvex-code
+      # Mount project directory for working with code
+      - ${PROJECT_DIR:-.}:/workspace
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: ["lunvex-code", "run"]
+
+  tests:
+    build: .
+    image: lunvex-code:dev
+    container_name: lunvex-code-tests
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-test}
+    volumes:
+      - .:/home/lunvex/app
+    working_dir: /home/lunvex/app
+    command: ["pytest", "tests/", "-v"]
+
+  lint:
+    build: .
+    image: lunvex-code:dev
+    container_name: lunvex-code-lint
+    volumes:
+      - .:/home/lunvex/app
+    working_dir: /home/lunvex/app
+    command: ["ruff", "check", "lunvex_code/", "tests/"]
+
+  format:
+    build: .
+    image: lunvex-code:dev
+    container_name: lunvex-code-format
+    volumes:
+      - .:/home/lunvex/app
+    working_dir: /home/lunvex/app
+    command: ["ruff", "format", "lunvex_code/", "tests/"]

@@ -130,6 +130,80 @@ lunvex-code configure-llm-cache --max-size=1000 --ttl-seconds=3600
 lunvex-code init
 ```
 
+## 🏗️ Development & Contribution
+
+### Development Setup
+```bash
+# Clone and setup
+git clone https://github.com/artemmelnik/lunvex-code.git
+cd lunvex-code
+
+# Install with development dependencies
+make dev
+
+# Or manually:
+pip install -e ".[dev]"
+./scripts/setup_pre_commit.sh
+```
+
+### Code Quality
+LunVex Code maintains high code quality standards with automated checks:
+
+```bash
+# Run all checks
+make all
+
+# Or individual checks:
+make lint      # Lint code
+make format    # Format code
+make type-check # Check type hints
+make test      # Run tests
+make security  # Security checks
+```
+
+### Pre-commit Hooks
+The project includes pre-commit hooks that automatically:
+- Format code with ruff and black
+- Fix linting issues
+- Remove trailing whitespace
+- Validate configuration files
+- Run smoke tests
+- Check type hint coverage
+
+### Testing
+- **382+ tests** with comprehensive coverage
+- **Sync and async** implementations tested
+- **Integration tests** for complex workflows
+- **Performance benchmarks** for async operations
+- **CI/CD pipeline** with GitHub Actions
+
+### Docker Support
+```bash
+# Build Docker image
+make docker
+
+# Run in Docker
+make docker-run
+
+# Or with docker-compose
+docker-compose up lunvex-code
+```
+
+### Project Structure
+```
+lunvex-code/
+├── lunvex_code/     # Main Python package
+├── tests/          # Test suite
+├── docs/           # Documentation
+├── examples/       # Usage examples
+├── scripts/        # Utility scripts
+├── config/         # Configuration files
+├── .github/        # CI/CD workflows
+└── Makefile        # Development commands
+```
+
+See [PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) for details.
+
 ## 🧠 Task Planning System
 
 LunVex Code includes an intelligent task planning system that automatically decomposes complex coding tasks into manageable subtasks, solving the problem of limited LLM context windows.

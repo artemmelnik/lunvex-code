@@ -3,10 +3,9 @@
 import asyncio
 import re
 from pathlib import Path
-from typing import Optional
 
 from .async_base import AsyncTool, AsyncToolResult
-from .progress_decorators import with_search_progress, ProgressAwareMixin
+from .progress_decorators import ProgressAwareMixin
 
 
 class AsyncGlobTool(AsyncTool, ProgressAwareMixin):
@@ -67,9 +66,7 @@ class AsyncGlobTool(AsyncTool, ProgressAwareMixin):
             # Use pathlib's glob for pattern matching
             # Run glob in thread pool since it's I/O bound
             loop = asyncio.get_event_loop()
-            all_matches = await loop.run_in_executor(
-                None, lambda: list(base_path.glob(pattern))
-            )
+            all_matches = await loop.run_in_executor(None, lambda: list(base_path.glob(pattern)))
 
             for i, match in enumerate(all_matches):
                 total_scanned += 1
@@ -231,7 +228,9 @@ class AsyncGrepTool(AsyncTool, ProgressAwareMixin):
             try:
                 regex = re.compile(pattern, flags)
             except re.error as e:
-                return AsyncToolResult(success=False, output="", error=f"Invalid regex pattern: {e}")
+                return AsyncToolResult(
+                    success=False, output="", error=f"Invalid regex pattern: {e}"
+                )
 
             matches = []
             files_searched = 0
@@ -253,29 +252,32 @@ class AsyncGrepTool(AsyncTool, ProgressAwareMixin):
             # Process files in batches for better performance
             batch_size = 10
             for batch_start in range(0, len(files_to_search), batch_size):
-                batch = files_to_search[batch_start:batch_start + batch_size]
-                
+                batch = files_to_search[batch_start : batch_start + batch_size]
+
                 # Process batch in parallel
                 batch_tasks = []
                 for file_path in batch:
                     task = self._search_file(file_path, base_path, regex, limit - len(matches))
                     batch_tasks.append(task)
-                
+
                 batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
-                
+
                 for result in batch_results:
                     if isinstance(result, Exception):
                         continue
                     files_searched += 1
                     matches.extend(result)
-                    
+
                     if len(matches) >= limit:
                         break
-                
+
                 # Update progress
                 progress = 0.3 + (batch_start / len(files_to_search)) * 0.6
-                self._update_progress(progress, f"Searching {batch_start + len(batch)}/{len(files_to_search)} files...")
-                
+                self._update_progress(
+                    progress,
+                    f"Searching {batch_start + len(batch)}/{len(files_to_search)} files...",
+                )
+
                 if len(matches) >= limit:
                     break
 
@@ -297,7 +299,9 @@ class AsyncGrepTool(AsyncTool, ProgressAwareMixin):
         except Exception as e:
             return AsyncToolResult(success=False, output="", error=str(e))
 
-    async def _search_file(self, file_path: Path, base_path: Path, regex: re.Pattern, remaining_limit: int) -> list:
+    async def _search_file(
+        self, file_path: Path, base_path: Path, regex: re.Pattern, remaining_limit: int
+    ) -> list:
         """Search a single file for matches."""
         if not file_path.is_file():
             return []
@@ -314,10 +318,8 @@ class AsyncGrepTool(AsyncTool, ProgressAwareMixin):
         try:
             # Read file asynchronously
             loop = asyncio.get_event_loop()
-            content = await loop.run_in_executor(
-                None, self._read_file_sync, file_path
-            )
-            
+            content = await loop.run_in_executor(None, self._read_file_sync, file_path)
+
             # Search in content
             lines = content.splitlines()
             for line_num, line in enumerate(lines, 1):

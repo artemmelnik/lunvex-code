@@ -2,6 +2,7 @@
 
 import os
 import sys
+import time
 from typing import Optional
 
 import typer
@@ -17,8 +18,6 @@ from . import (
     APP_STATE_DIRNAME,
     CACHE_MAX_SIZE,
     CACHE_TTL_SECONDS,
-    LLM_CACHE_MAX_SIZE,
-    LLM_CACHE_TTL_SECONDS,
     __version__,
     ui,
 )
@@ -26,7 +25,6 @@ from .agent import Agent, AgentConfig
 from .cache import configure_cache
 from .context import get_project_context
 from .llm import LunVexClient
-from .llm_cache import configure_llm_cache
 
 # Load environment variables from .env file
 load_dotenv()
@@ -292,7 +290,9 @@ def run(
         lunvex-code run --no-animation "Analyze the code"
         lunvex-code run --no-planning "Simple task"  # Disable task planning
     """
-    create_and_run_agent(task, model, trust, yolo, max_turns, verbose, no_context, no_animation, no_planning)
+    create_and_run_agent(
+        task, model, trust, yolo, max_turns, verbose, no_context, no_animation, no_planning
+    )
 
 
 @app.command()
@@ -363,10 +363,10 @@ def version() -> None:
 def cache_stats() -> None:
     """Show file cache statistics."""
     from .cache import get_file_cache
-    
+
     cache = get_file_cache()
     stats = cache.get_stats()
-    
+
     console.print("[bold]File Cache Statistics:[/bold]")
     console.print(f"  Size: {stats['size']}/{stats['max_size']} files")
     console.print(f"  Hits: {stats['hits']}")
@@ -379,10 +379,10 @@ def cache_stats() -> None:
 def clear_cache() -> None:
     """Clear all entries from the file cache."""
     from .cache import get_file_cache
-    
+
     cache = get_file_cache()
     cache.clear()
-    
+
     console.print("[green]✓[/green] File cache cleared successfully.")
 
 
@@ -393,17 +393,19 @@ def configure_cache(
 ) -> None:
     """Configure file cache settings."""
     from .cache import configure_cache
-    
+
     if max_size <= 0:
         console.print("[red]Error:[/red] max_size must be positive")
         raise typer.Exit(1)
-    
+
     if ttl_seconds <= 0:
         console.print("[red]Error:[/red] ttl_seconds must be positive")
         raise typer.Exit(1)
-    
+
     configure_cache(max_size=max_size, ttl_seconds=ttl_seconds)
-    console.print(f"[green]✓[/green] Cache configured: max_size={max_size}, ttl_seconds={ttl_seconds}")
+    console.print(
+        f"[green]✓[/green] Cache configured: max_size={max_size}, ttl_seconds={ttl_seconds}"
+    )
 
 
 @app.command()
@@ -420,10 +422,12 @@ def llm_cache_stats() -> None:
     console.print(f"  Misses: {stats['misses']}")
     console.print(f"  Hit Rate: {stats['hit_rate']:.1%}")
     console.print(f"  Tokens Saved: {stats['tokens_saved']:,}")
-    console.print(f"  TTL: {stats['ttl_seconds']} seconds ({stats['ttl_seconds']/3600:.1f} hours)")
-    
-    if stats['current_size'] > 0:
-        oldest_age = int(time.time() - stats['oldest_entry'])
+    console.print(
+        f"  TTL: {stats['ttl_seconds']} seconds ({stats['ttl_seconds'] / 3600:.1f} hours)"
+    )
+
+    if stats["current_size"] > 0:
+        oldest_age = int(time.time() - stats["oldest_entry"])
         console.print(f"  Oldest Entry: {oldest_age} seconds ago")
         console.print(f"  Most Accessed: {stats['most_accessed']} hits")
 
@@ -439,13 +443,14 @@ def clear_llm_cache() -> None:
     console.print("[green]✓[/green] LLM cache cleared successfully.")
 
 
-@app.command()
-def configure_llm_cache(
+@app.command(name="configure-llm-cache")
+def configure_llm_cache_cmd(
     max_size: int = typer.Option(100, help="Maximum number of responses to cache"),
     ttl_seconds: int = typer.Option(3600, help="Time-to-live for cache entries in seconds"),
 ) -> None:
     """Configure LLM cache settings."""
-    from .llm_cache import configure_llm_cache, save_llm_cache
+    from .llm_cache import configure_llm_cache as configure_cache_func
+    from .llm_cache import save_llm_cache
 
     if max_size <= 0:
         console.print("[red]Error:[/red] max_size must be positive")
@@ -455,14 +460,12 @@ def configure_llm_cache(
         console.print("[red]Error:[/red] ttl_seconds must be positive")
         raise typer.Exit(1)
 
-    configure_llm_cache(max_size=max_size, ttl_seconds=ttl_seconds)
+    configure_cache_func(max_size=max_size, ttl_seconds=ttl_seconds)
     save_llm_cache()
-    console.print(f"[green]✓[/green] LLM cache configured: max_size={max_size}, ttl_seconds={ttl_seconds}")
-    console.print(f"[dim]Configuration saved to persistent storage[/dim]")
-
-
-# Import time for llm_cache_stats
-import time
+    console.print(
+        f"[green]✓[/green] LLM cache configured: max_size={max_size}, ttl_seconds={ttl_seconds}"
+    )
+    console.print("[dim]Configuration saved to persistent storage[/dim]")
 
 
 def main():

@@ -1,12 +1,13 @@
 """Async web access tools for fetching external URLs."""
 
-import aiohttp
 import asyncio
 import json
 import re
 from html import unescape
 from html.parser import HTMLParser
 from urllib.parse import urlparse
+
+import aiohttp
 
 from .async_base import AsyncTool, AsyncToolResult
 
@@ -127,8 +128,7 @@ class AsyncFetchURLTool(AsyncTool):
                 )
 
             async with aiohttp.ClientSession(
-                timeout=self.TIMEOUT,
-                headers={"User-Agent": self.USER_AGENT}
+                timeout=self.TIMEOUT, headers={"User-Agent": self.USER_AGENT}
             ) as session:
                 async with session.get(url, allow_redirects=True) as response:
                     response.raise_for_status()
@@ -142,7 +142,7 @@ class AsyncFetchURLTool(AsyncTool):
 
                     content_type = response.headers.get("content-type", "").lower()
                     encoding = response.charset or "utf-8"
-                    
+
                     try:
                         content = content_bytes.decode(encoding, errors="replace")
                     except UnicodeDecodeError:

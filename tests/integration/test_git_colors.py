@@ -2,10 +2,12 @@
 """Test git color highlighting."""
 
 import sys
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
+
+from rich.console import Console
 
 from lunvex_code.tools.git_colors import git_colorizer
-from rich.console import Console
 
 console = Console()
 
@@ -18,7 +20,7 @@ index abc123..def456 100644
  def hello():
 -    print("Hello, World!")
 +    print("Hello, Universe!")
- 
+
  def goodbye():
      print("Goodbye!")
 """
@@ -90,10 +92,11 @@ index 0000000..abc1234 100644
 +
 """
 
+
 def test_all():
     """Test all colorization functions."""
     console.print("\n[bold cyan]=== Testing Git Colorizer ===[/bold cyan]\n")
-    
+
     # Test diff
     console.print("[bold]1. Git Diff:[/bold]")
     colored_diff = git_colorizer.colorize_diff(test_diff)
@@ -102,49 +105,50 @@ def test_all():
     print(repr(colored_diff[:200]))
     print("\nRendered:")
     console.print(colored_diff, markup=False)
-    
+
     # Test status
     console.print("\n[bold]2. Git Status (long):[/bold]")
     colored_status = git_colorizer.colorize_status(test_status)
     console.print(colored_status, markup=False)
-    
+
     # Test status short
     console.print("\n[bold]3. Git Status (short):[/bold]")
     colored_status_short = git_colorizer.colorize_status(test_status_short, short=True)
     console.print(colored_status_short, markup=False)
-    
+
     # Test branch
     console.print("\n[bold]4. Git Branch:[/bold]")
     colored_branch = git_colorizer.colorize_branch(test_branch)
     console.print(colored_branch, markup=False)
-    
+
     # Test log
     console.print("\n[bold]5. Git Log (multi-line):[/bold]")
     colored_log = git_colorizer.colorize_log(test_log)
     console.print(colored_log, markup=False)
-    
+
     # Test log oneline
     console.print("\n[bold]6. Git Log (one-line):[/bold]")
     colored_log_oneline = git_colorizer.colorize_log(test_log_oneline, oneline=True)
     console.print(colored_log_oneline, markup=False)
-    
+
     # Test show
     console.print("\n[bold]7. Git Show:[/bold]")
     colored_show = git_colorizer.colorize_show(test_show)
     console.print(colored_show, markup=False)
-    
+
     # Test table
     console.print("\n[bold]8. Branch Table:[/bold]")
-    branches = test_branch.strip().split('\n')
+    branches = test_branch.strip().split("\n")
     table = git_colorizer.create_branch_table(branches)
     console.print(table)
-    
+
     # Test status summary
     console.print("\n[bold]9. Status Summary:[/bold]")
     summary = git_colorizer.create_status_summary(test_status)
     console.print(summary)
-    
+
     console.print("\n[bold green]✓ All tests completed![/bold green]")
+
 
 if __name__ == "__main__":
     test_all()

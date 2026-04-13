@@ -2,7 +2,7 @@
 
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from lunvex_code.dependencies.analyzer import DependencyAnalyzer
 from lunvex_code.dependencies.models import Dependency, DependencyReport, DependencyType, Ecosystem
@@ -15,7 +15,7 @@ class TestDependencyVisualizer:
     def test_visualization_options_defaults(self):
         """Test default visualization options."""
         options = VisualizationOptions()
-        
+
         assert options.show_versions is True
         assert options.show_types is True
         assert options.show_vulnerabilities is True
@@ -31,9 +31,9 @@ class TestDependencyVisualizer:
             show_vulnerabilities=False,
             group_by_type=True,
             width=800,
-            height=600
+            height=600,
         )
-        
+
         assert options.show_versions is False
         assert options.show_types is False
         assert options.show_vulnerabilities is False
@@ -45,7 +45,7 @@ class TestDependencyVisualizer:
         """Test that the visualizer can be initialized."""
         mock_analyzer = Mock(spec=DependencyAnalyzer)
         visualizer = DependencyVisualizer(mock_analyzer)
-        
+
         assert visualizer is not None
         assert visualizer.analyzer == mock_analyzer
 
@@ -53,10 +53,10 @@ class TestDependencyVisualizer:
         """Test generating DOT graph with empty dependencies."""
         mock_analyzer = Mock(spec=DependencyAnalyzer)
         mock_analyzer.analyze_all.return_value = {}
-        
+
         visualizer = DependencyVisualizer(mock_analyzer)
         dot_graph = visualizer.generate_dot_graph()
-        
+
         assert isinstance(dot_graph, str)
         assert "digraph dependencies" in dot_graph
         assert "rankdir=LR" in dot_graph
@@ -68,29 +68,27 @@ class TestDependencyVisualizer:
             name="requests",
             version="2.33.1",
             ecosystem=Ecosystem.PYTHON,
-            dep_type=DependencyType.PRODUCTION
+            dep_type=DependencyType.PRODUCTION,
         )
-        
+
         dep2 = Dependency(
             name="pytest",
             version="9.0.3",
             ecosystem=Ecosystem.PYTHON,
-            dep_type=DependencyType.DEVELOPMENT
+            dep_type=DependencyType.DEVELOPMENT,
         )
-        
+
         # Create mock report
         report = DependencyReport(
-            ecosystem=Ecosystem.PYTHON,
-            dependencies=[dep1, dep2],
-            source_files=["pyproject.toml"]
+            ecosystem=Ecosystem.PYTHON, dependencies=[dep1, dep2], source_files=["pyproject.toml"]
         )
-        
+
         mock_analyzer = Mock(spec=DependencyAnalyzer)
         mock_analyzer.analyze_all.return_value = {Ecosystem.PYTHON: report}
-        
+
         visualizer = DependencyVisualizer(mock_analyzer)
         dot_graph = visualizer.generate_dot_graph()
-        
+
         assert isinstance(dot_graph, str)
         assert "digraph dependencies" in dot_graph
         assert "requests" in dot_graph.lower()
@@ -100,10 +98,10 @@ class TestDependencyVisualizer:
         """Test generating HTML visualization with empty dependencies."""
         mock_analyzer = Mock(spec=DependencyAnalyzer)
         mock_analyzer.analyze_all.return_value = {}
-        
+
         visualizer = DependencyVisualizer(mock_analyzer)
         html = visualizer.generate_simple_html()
-        
+
         assert isinstance(html, str)
         assert "<!DOCTYPE html>" in html
         assert "<title>Dependency Visualization - LunVex Code</title>" in html
@@ -115,22 +113,20 @@ class TestDependencyVisualizer:
             name="requests",
             version="2.33.1",
             ecosystem=Ecosystem.PYTHON,
-            dep_type=DependencyType.PRODUCTION
+            dep_type=DependencyType.PRODUCTION,
         )
-        
+
         # Create mock report
         report = DependencyReport(
-            ecosystem=Ecosystem.PYTHON,
-            dependencies=[dep1],
-            source_files=["pyproject.toml"]
+            ecosystem=Ecosystem.PYTHON, dependencies=[dep1], source_files=["pyproject.toml"]
         )
-        
+
         mock_analyzer = Mock(spec=DependencyAnalyzer)
         mock_analyzer.analyze_all.return_value = {Ecosystem.PYTHON: report}
-        
+
         visualizer = DependencyVisualizer(mock_analyzer)
         html = visualizer.generate_simple_html()
-        
+
         assert isinstance(html, str)
         assert "<!DOCTYPE html>" in html
         assert "requests" in html
@@ -139,16 +135,16 @@ class TestDependencyVisualizer:
         """Test saving DOT visualization to file."""
         mock_analyzer = Mock(spec=DependencyAnalyzer)
         mock_analyzer.analyze_all.return_value = {}
-        
+
         visualizer = DependencyVisualizer(mock_analyzer)
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "dependencies.dot"
             result = visualizer.save_visualization(str(output_path), "dot")
-            
+
             assert result is True
             assert output_path.exists()
-            
+
             content = output_path.read_text()
             assert "digraph dependencies" in content
 
@@ -156,16 +152,16 @@ class TestDependencyVisualizer:
         """Test saving HTML visualization to file."""
         mock_analyzer = Mock(spec=DependencyAnalyzer)
         mock_analyzer.analyze_all.return_value = {}
-        
+
         visualizer = DependencyVisualizer(mock_analyzer)
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "dependencies.html"
             result = visualizer.save_visualization(str(output_path), "html")
-            
+
             assert result is True
             assert output_path.exists()
-            
+
             content = output_path.read_text()
             assert "<!DOCTYPE html>" in content
 
@@ -173,11 +169,11 @@ class TestDependencyVisualizer:
         """Test saving visualization with invalid format."""
         mock_analyzer = Mock(spec=DependencyAnalyzer)
         visualizer = DependencyVisualizer(mock_analyzer)
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "dependencies.txt"
             result = visualizer.save_visualization(str(output_path), "invalid")
-            
+
             assert result is False
             assert not output_path.exists()
 
@@ -188,22 +184,20 @@ class TestDependencyVisualizer:
             name="requests",
             version="2.33.1",
             ecosystem=Ecosystem.PYTHON,
-            dep_type=DependencyType.PRODUCTION
+            dep_type=DependencyType.PRODUCTION,
         )
-        
+
         # Create mock report
         report = DependencyReport(
-            ecosystem=Ecosystem.PYTHON,
-            dependencies=[dep1],
-            source_files=["pyproject.toml"]
+            ecosystem=Ecosystem.PYTHON, dependencies=[dep1], source_files=["pyproject.toml"]
         )
-        
+
         mock_analyzer = Mock(spec=DependencyAnalyzer)
         mock_analyzer.analyze_all.return_value = {Ecosystem.PYTHON: report}
         visualizer = DependencyVisualizer(mock_analyzer)
-        
+
         dot_graph = visualizer.generate_dot_graph()
-        
+
         # Check that the graph was generated and contains the dependency
         assert isinstance(dot_graph, str)
         assert "digraph dependencies" in dot_graph
@@ -215,18 +209,15 @@ class TestDependencyVisualizer:
         """Test visualizer with custom options."""
         mock_analyzer = Mock(spec=DependencyAnalyzer)
         mock_analyzer.analyze_all.return_value = {}
-        
+
         visualizer = DependencyVisualizer(mock_analyzer)
-        
+
         options = VisualizationOptions(
-            show_versions=False,
-            show_types=False,
-            width=1600,
-            height=1200
+            show_versions=False, show_types=False, width=1600, height=1200
         )
-        
+
         dot_graph = visualizer.generate_dot_graph(options)
-        
+
         assert isinstance(dot_graph, str)
         assert "digraph dependencies" in dot_graph
         # Note: We can't easily test that options were applied without

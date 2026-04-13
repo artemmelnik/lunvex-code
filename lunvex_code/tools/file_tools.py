@@ -1,12 +1,10 @@
 """File operation tools: read, write, edit."""
 
-import os
 from pathlib import Path
 
 from ..cache import read_file_with_cache
-from ..progress import spinner
 from .base import Tool, ToolResult
-from .progress_decorators import with_file_progress, ProgressAwareMixin
+from .progress_decorators import ProgressAwareMixin, with_file_progress
 
 
 class ReadFileTool(Tool, ProgressAwareMixin):
@@ -48,36 +46,40 @@ class ReadFileTool(Tool, ProgressAwareMixin):
 
             # Get file size for progress estimation
             file_size = file_path.stat().st_size
-            
+
             # Update progress for large files
             if file_size > 1024 * 1024:  # > 1MB
                 self._update_progress(0.3, "Reading file...")
 
             # Read file with caching
             content, from_cache = read_file_with_cache(file_path, limit, offset)
-            
+
             if file_size > 1024 * 1024:
                 self._update_progress(0.7, "Formatting content...")
-            
+
             # Split into lines for formatting
             lines = content.splitlines(keepends=True)
-            
+
             # Apply offset (convert to 0-indexed) - already done in cache function
             start_idx = max(0, offset - 1)
-            
+
             # Format with line numbers
             content_lines = []
             for i, line in enumerate(lines, start=start_idx + 1):
                 content_lines.append(f"{i:6d}\t{line.rstrip()}")
 
             formatted_content = "\n".join(content_lines)
-            
+
             # Add cache indicator to output
             cache_indicator = " [cached]" if from_cache else ""
-            
+
             return ToolResult(
                 success=True,
-                output=f"Contents of {path}{cache_indicator}:\n{formatted_content}" if formatted_content else f"{path} is empty{cache_indicator}",
+                output=(
+                    f"Contents of {path}{cache_indicator}:\n{formatted_content}"
+                    if formatted_content
+                    else f"{path} is empty{cache_indicator}"
+                ),
             )
 
         except PermissionError:
@@ -112,23 +114,24 @@ class WriteFileTool(Tool, ProgressAwareMixin):
     def execute(self, path: str, content: str) -> ToolResult:
         try:
             file_path = Path(path).expanduser().resolve()
-            
+
             # Update progress
             self._update_progress(0.3, "Preparing to write...")
 
             # Create parent directories if needed
             file_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             self._update_progress(0.6, "Writing content...")
 
             # Write the file
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
-            
+
             self._update_progress(0.8, "Updating cache...")
 
             # Invalidate cache for this file
             from ..cache import get_file_cache
+
             cache = get_file_cache()
             cache.invalidate(file_path)
 
@@ -175,7 +178,7 @@ class EditFileTool(Tool, ProgressAwareMixin):
     def execute(self, path: str, old_str: str, new_str: str) -> ToolResult:
         try:
             file_path = Path(path).expanduser().resolve()
-            
+
             self._update_progress(0.2, "Checking file...")
 
             if not file_path.exists():
@@ -183,13 +186,13 @@ class EditFileTool(Tool, ProgressAwareMixin):
 
             if not file_path.is_file():
                 return ToolResult(success=False, output="", error=f"Not a file: {path}")
-            
+
             self._update_progress(0.4, "Reading file...")
 
             # Read current content
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-            
+
             self._update_progress(0.6, "Finding string...")
 
             # Check uniqueness
@@ -206,7 +209,7 @@ class EditFileTool(Tool, ProgressAwareMixin):
                     output="",
                     error=f"String found {count} times. old_str must be unique. Include more surrounding context to make it unique.",
                 )
-            
+
             self._update_progress(0.8, "Making replacement...")
 
             # Perform replacement
@@ -215,11 +218,12 @@ class EditFileTool(Tool, ProgressAwareMixin):
             # Write back
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
-            
+
             self._update_progress(0.9, "Updating cache...")
 
             # Invalidate cache for this file
             from ..cache import get_file_cache
+
             cache = get_file_cache()
             cache.invalidate(file_path)
 

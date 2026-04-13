@@ -2,14 +2,11 @@
 
 import json
 import subprocess
-import sys
 from pathlib import Path
-from typing import Optional
 
 import tomli
 import tomli_w
 
-from lunvex_code.dependencies import DependencyAnalyzer
 from ..base import Tool, ToolResult
 
 
@@ -494,7 +491,12 @@ class RemoveDependencyTool(Tool):
             removed = False
 
             # Check all dependency sections
-            for section in ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]:
+            for section in [
+                "dependencies",
+                "devDependencies",
+                "peerDependencies",
+                "optionalDependencies",
+            ]:
                 if section in data and package in data[section]:
                     del data[section][package]
                     removed = True
@@ -840,7 +842,12 @@ class UpdateDependencyTool(Tool):
             updated = False
 
             # Update in all dependency sections
-            for section in ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]:
+            for section in [
+                "dependencies",
+                "devDependencies",
+                "peerDependencies",
+                "optionalDependencies",
+            ]:
                 if section in data and package in data[section]:
                     data[section][package] = version
                     updated = True
@@ -886,7 +893,8 @@ class UpdateDependencyTool(Tool):
                 if package in line and "version" in line:
                     # Simple regex-like replacement
                     import re
-                    pattern = rf'version\s*=\s*"[^"]*"'
+
+                    pattern = r'version\s*=\s*"[^"]*"'
                     replacement = f'version = "{version}"'
                     new_line = re.sub(pattern, replacement, line)
                     new_lines.append(new_line)
@@ -972,6 +980,7 @@ class UpdateDependencyTool(Tool):
                 if f'gem "{package}"' in line:
                     # Update version in gem line
                     import re
+
                     pattern = rf'gem "{package}"(?:,\s*"[^"]*")?'
                     replacement = f'gem "{package}", "{version}"'
                     new_line = re.sub(pattern, replacement, line)

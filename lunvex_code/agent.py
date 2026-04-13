@@ -1,13 +1,14 @@
 """Core agent loop implementation."""
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 from . import ui
 from .context import ProjectContext, build_system_prompt
 from .conversation import ConversationHistory
 from .llm import LunVexClient, ToolCall
 from .permissions import PermissionLevel, PermissionManager, PermissionRequest
+from .task_planner import TaskPlanner
 from .tools.base import ToolRegistry, create_default_registry
 
 
@@ -30,9 +31,18 @@ class Agent:
         self,
         client: LunVexClient,
         context: ProjectContext,
-        config: AgentConfig | None = None,
-        registry: ToolRegistry | None = None,
-    ):
+        config: Optional[AgentConfig] = None,
+        registry: Optional[ToolRegistry] = None,
+    ) -> None:
+        """
+        Initialize the agent.
+
+        Args:
+            client: LLM client for making API calls
+            context: Project context information
+            config: Agent configuration (optional)
+            registry: Tool registry (optional, uses default if not provided)
+        """
         self.client = client
         self.context = context
         self.config = config or AgentConfig()
@@ -219,54 +229,53 @@ class Agent:
         # Check if we should use task planning
         if use_planning and self._should_use_planning(task):
             return self._run_with_planning(task)
-        
+
         # Use standard execution
         return self._run_standard(task)
-    
+
     def _should_use_planning(self, task: str) -> bool:
         """
         Determine if task planning should be used.
-        
+
         Can be overridden for custom logic.
         """
         # Simple heuristic: use planning for complex tasks
-        from .task_planner import TaskPlanner
+
         planner = TaskPlanner(self.client, self.registry, self.context.working_dir)
         return planner._is_complex_task(task)
-    
+
     def _run_with_planning(self, task: str) -> str:
         """
         Run task with automatic decomposition into subtasks.
         """
         from . import ui
-        from .task_planner import TaskPlanner
-        
+
         ui.print_info("🔍 Analyzing task complexity...")
-        
+
         # Create task planner
         planner = TaskPlanner(self.client, self.registry, self.context.working_dir)
-        
+
         # Create task plan
         ui.print_info("📋 Creating task plan...")
         plan = planner.create_task_plan(task)
-        
+
         ui.print_success(f"✅ Created plan with {len(plan.subtasks)} subtasks")
-        
+
         # Display plan
         self._display_task_plan(plan)
-        
+
         # Execute plan
         ui.print_info("🚀 Executing task plan...")
         result = planner.execute_plan(plan, self)
-        
+
         return result
-    
+
     def _run_standard(self, task: str) -> str:
         """
         Run task using standard agent loop.
         """
         from . import ui
-        
+
         # Add initial task
         self.history.add_user_message(task)
 
@@ -281,22 +290,24 @@ class Agent:
         # Max turns reached
         ui.print_warning(f"Reached maximum turns ({self.config.max_turns})")
         return "Task incomplete - maximum turns reached."
-    
+
     def _display_task_plan(self, plan):
         """Display the task plan to user."""
         from . import ui
-        
+
         ui.print_section("📋 Task Execution Plan")
         ui.print_info(f"Original task: {plan.original_task}")
         ui.print_info(f"Number of subtasks: {len(plan.subtasks)}")
-        
+
         for i, subtask_id in enumerate(plan.execution_order, 1):
             subtask = next(st for st in plan.subtasks if st.id == subtask_id)
             deps = ", ".join(subtask.dependencies) if subtask.dependencies else "none"
             ui.print_info(f"{i}. {subtask.id}: {subtask.description}")
             ui.print_info(f"   Dependencies: {deps}")
-            ui.print_info(f"   Files: {', '.join(subtask.context_files[:3])}" + 
-                         ("..." if len(subtask.context_files) > 3 else ""))
+            ui.print_info(
+                f"   Files: {', '.join(subtask.context_files[:3])}"
+                + ("..." if len(subtask.context_files) > 3 else "")
+            )
 
     def chat(self, message: str) -> str:
         """

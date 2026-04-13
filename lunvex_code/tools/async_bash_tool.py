@@ -2,7 +2,6 @@
 
 import asyncio
 import re
-import subprocess
 
 from .async_base import AsyncTool, AsyncToolResult
 
@@ -84,10 +83,7 @@ class AsyncBashTool(AsyncTool):
 
             try:
                 # Wait for process to complete with timeout
-                stdout, stderr = await asyncio.wait_for(
-                    process.communicate(),
-                    timeout=timeout
-                )
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             except asyncio.TimeoutError:
                 # Kill the process if it times out
                 process.kill()
@@ -101,9 +97,9 @@ class AsyncBashTool(AsyncTool):
             # Decode output
             output_parts = []
             if stdout:
-                output_parts.append(stdout.decode('utf-8', errors='replace'))
+                output_parts.append(stdout.decode("utf-8", errors="replace"))
             if stderr:
-                output_parts.append(stderr.decode('utf-8', errors='replace'))
+                output_parts.append(stderr.decode("utf-8", errors="replace"))
 
             output = "\n".join(output_parts).strip()
 
