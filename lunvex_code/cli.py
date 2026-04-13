@@ -175,6 +175,7 @@ def create_and_run_agent(
     verbose: bool,
     no_context: bool,
     no_animation: bool = False,
+    no_planning: bool = False,
 ) -> None:
     """Create an agent and run it with the given task or in interactive mode."""
     api_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -220,7 +221,7 @@ def create_and_run_agent(
     if task:
         # Single task mode
         try:
-            agent.run(task)
+            agent.run(task, use_planning=not no_planning)
         except KeyboardInterrupt:
             console.print("\n[warning]Interrupted[/warning]")
             raise typer.Exit(130)
@@ -274,6 +275,11 @@ def run(
         "--no-animation",
         help="Disable thinking animations (show 'Thinking...' instead)",
     ),
+    no_planning: bool = typer.Option(
+        False,
+        "--no-planning",
+        help="Disable automatic task planning for complex tasks",
+    ),
 ) -> None:
     """
     Run LunVex Code with a task or in interactive mode.
@@ -284,8 +290,9 @@ def run(
         lunvex-code run --trust "Run the tests"
         lunvex-code run --yolo "Refactor the entire codebase"
         lunvex-code run --no-animation "Analyze the code"
+        lunvex-code run --no-planning "Simple task"  # Disable task planning
     """
-    create_and_run_agent(task, model, trust, yolo, max_turns, verbose, no_context, no_animation)
+    create_and_run_agent(task, model, trust, yolo, max_turns, verbose, no_context, no_animation, no_planning)
 
 
 @app.command()

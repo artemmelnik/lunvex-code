@@ -25,6 +25,7 @@ LunVex Code is a powerful AI coding assistant that helps developers with softwar
 - **Context-Aware**: Understands project structure and conventions
 - **Multi-Turn Conversations**: Maintains context across interactions
 - **Tool Usage**: Intelligently selects and uses appropriate tools
+- **Task Planning**: Automatically decomposes complex tasks into manageable subtasks
 
 ### ⚡ Full Async Support
 - **Parallel Execution**: Run multiple tools simultaneously
@@ -39,6 +40,7 @@ LunVex Code is a powerful AI coding assistant that helps developers with softwar
 - **System Commands**: Safe bash execution
 - **Web Tools**: URL fetching and content extraction
 - **Dependency Management**: Package analysis and updates
+- **Task Planning**: Automatic decomposition of complex tasks
 
 ### 🔒 Security & Safety
 - **Permission System**: Granular tool access control
@@ -74,6 +76,9 @@ lunvex-code run --trust "Fix the bug in auth.py"
 
 # Async mode
 lunvex-code run-async "Refactor the entire codebase"
+
+# Disable task planning for simple tasks
+lunvex-code run --no-planning "Read the README.md file"
 ```
 
 ### Initialize Project Context

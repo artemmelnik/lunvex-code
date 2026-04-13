@@ -205,16 +205,68 @@ class Agent:
         # Continue processing (tool results added, ready for next turn)
         return None
 
-    def run(self, task: str) -> str:
+    def run(self, task: str, use_planning: bool = True) -> str:
         """
         Run the agent loop until task is complete.
 
         Args:
             task: The task/prompt to execute
+            use_planning: Whether to use task planning for complex tasks
 
         Returns:
             Final response from the agent
         """
+        # Check if we should use task planning
+        if use_planning and self._should_use_planning(task):
+            return self._run_with_planning(task)
+        
+        # Use standard execution
+        return self._run_standard(task)
+    
+    def _should_use_planning(self, task: str) -> bool:
+        """
+        Determine if task planning should be used.
+        
+        Can be overridden for custom logic.
+        """
+        # Simple heuristic: use planning for complex tasks
+        from .task_planner import TaskPlanner
+        planner = TaskPlanner(self.client, self.registry, self.context.working_dir)
+        return planner._is_complex_task(task)
+    
+    def _run_with_planning(self, task: str) -> str:
+        """
+        Run task with automatic decomposition into subtasks.
+        """
+        from . import ui
+        from .task_planner import TaskPlanner
+        
+        ui.print_info("🔍 Analyzing task complexity...")
+        
+        # Create task planner
+        planner = TaskPlanner(self.client, self.registry, self.context.working_dir)
+        
+        # Create task plan
+        ui.print_info("📋 Creating task plan...")
+        plan = planner.create_task_plan(task)
+        
+        ui.print_success(f"✅ Created plan with {len(plan.subtasks)} subtasks")
+        
+        # Display plan
+        self._display_task_plan(plan)
+        
+        # Execute plan
+        ui.print_info("🚀 Executing task plan...")
+        result = planner.execute_plan(plan, self)
+        
+        return result
+    
+    def _run_standard(self, task: str) -> str:
+        """
+        Run task using standard agent loop.
+        """
+        from . import ui
+        
         # Add initial task
         self.history.add_user_message(task)
 
@@ -229,6 +281,22 @@ class Agent:
         # Max turns reached
         ui.print_warning(f"Reached maximum turns ({self.config.max_turns})")
         return "Task incomplete - maximum turns reached."
+    
+    def _display_task_plan(self, plan):
+        """Display the task plan to user."""
+        from . import ui
+        
+        ui.print_section("📋 Task Execution Plan")
+        ui.print_info(f"Original task: {plan.original_task}")
+        ui.print_info(f"Number of subtasks: {len(plan.subtasks)}")
+        
+        for i, subtask_id in enumerate(plan.execution_order, 1):
+            subtask = next(st for st in plan.subtasks if st.id == subtask_id)
+            deps = ", ".join(subtask.dependencies) if subtask.dependencies else "none"
+            ui.print_info(f"{i}. {subtask.id}: {subtask.description}")
+            ui.print_info(f"   Dependencies: {deps}")
+            ui.print_info(f"   Files: {', '.join(subtask.context_files[:3])}" + 
+                         ("..." if len(subtask.context_files) > 3 else ""))
 
     def chat(self, message: str) -> str:
         """

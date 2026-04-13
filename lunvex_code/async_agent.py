@@ -261,16 +261,68 @@ class AsyncAgent:
         # Continue processing (tool results added, ready for next turn)
         return None
 
-    async def run(self, task: str) -> str:
+    async def run(self, task: str, use_planning: bool = True) -> str:
         """
         Run the agent loop asynchronously until task is complete.
 
         Args:
             task: The task/prompt to execute
+            use_planning: Whether to use task planning for complex tasks
 
         Returns:
             Final response from the agent
         """
+        # Check if we should use task planning
+        if use_planning and await self._should_use_planning(task):
+            return await self._run_with_planning(task)
+        
+        # Use standard execution
+        return await self._run_standard(task)
+    
+    async def _should_use_planning(self, task: str) -> bool:
+        """
+        Determine if task planning should be used.
+        
+        Can be overridden for custom logic.
+        """
+        # Simple heuristic: use planning for complex tasks
+        from .task_planner import TaskPlanner
+        planner = TaskPlanner(self.client, self.registry, self.context.working_dir)
+        return planner._is_complex_task(task)
+    
+    async def _run_with_planning(self, task: str) -> str:
+        """
+        Run task with automatic decomposition into subtasks.
+        """
+        from . import ui
+        from .task_planner import TaskPlanner
+        
+        ui.print_info("🔍 Analyzing task complexity...")
+        
+        # Create task planner
+        planner = TaskPlanner(self.client, self.registry, self.context.working_dir)
+        
+        # Create task plan
+        ui.print_info("📋 Creating task plan...")
+        plan = planner.create_task_plan(task)
+        
+        ui.print_success(f"✅ Created plan with {len(plan.subtasks)} subtasks")
+        
+        # Display plan
+        self._display_task_plan(plan)
+        
+        # Execute plan
+        ui.print_info("🚀 Executing task plan...")
+        result = await planner.execute_plan_async(plan, self)
+        
+        return result
+    
+    async def _run_standard(self, task: str) -> str:
+        """
+        Run task using standard agent loop.
+        """
+        from . import ui
+        
         # Add initial task
         self.history.add_user_message(task)
 
@@ -285,7 +337,29 @@ class AsyncAgent:
         # Max turns reached
         ui.print_warning(f"Reached maximum turns ({self.config.max_turns})")
         return "Task incomplete - maximum turns reached."
+    
+    def _display_task_plan(self, plan):
+        """Display the task plan to user."""
+        from . import ui
+        
+        ui.print_section("📋 Task Execution Plan")
+        ui.print_info(f"Original task: {plan.original_task}")
+        ui.print_info(f"Number of subtasks: {len(plan.subtasks)}")
+        
+        for i, subtask_id in enumerate(plan.execution_order, 1):
+            subtask = next(st for st in plan.subtasks if st.id == subtask_id)
+            deps = ", ".join(subtask.dependencies) if subtask.dependencies else "none"
+            ui.print_info(f"{i}. {subtask.id}: {subtask.description}")
+            ui.print_info(f"   Dependencies: {deps}")
+            ui.print_info(f"   Files: {', '.join(subtask.context_files[:3])}" + 
+                         ("..." if len(subtask.context_files) > 3 else ""))
 
+    async def arun(self, task: str, use_planning: bool = True) -> str:
+        """
+        Alias for async run method.
+        """
+        return await self.run(task, use_planning)
+    
     async def chat(self, message: str) -> str:
         """
         Send a chat message and get response asynchronously (for interactive mode).
