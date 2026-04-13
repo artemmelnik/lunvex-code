@@ -276,16 +276,19 @@ class AsyncAgent:
 
         Args:
             task: The task/prompt to execute
-            use_planning: Whether to use task planning for complex tasks
+            use_planning: Whether to use task planning
+                         In async mode, planning is always used by default
+                         for better task decomposition and context management
 
         Returns:
             Final response from the agent
         """
-        # Check if we should use task planning
-        if use_planning and await self._should_use_planning(task):
+        # In async mode, ALWAYS use planning by default when enabled
+        # This ensures consistent behavior and better handling of all tasks
+        if use_planning:
             return await self._run_with_planning(task)
 
-        # Use standard execution
+        # Only use standard execution if planning is explicitly disabled
         return await self._run_standard(task)
 
     async def _should_use_planning(self, task: str) -> bool:

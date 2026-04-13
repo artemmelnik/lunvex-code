@@ -3,14 +3,34 @@
 import asyncio
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from lunvex_code.async_agent import AsyncAgent, AsyncAgentConfig
 from lunvex_code.async_cli import create_and_run_agent_async
+from lunvex_code.async_cli import interactive_loop_async as async_cli_interactive_loop_async
 from lunvex_code.context import ProjectContext
 from lunvex_code.llm import LunVexClient
+from lunvex_code.main import interactive_loop_async as main_interactive_loop_async
+
+
+class FakeAsyncPromptSession:
+    """Minimal async prompt session for REPL tests."""
+
+    def __init__(self, responses):
+        self._responses = iter(responses)
+        self.prompt_calls = 0
+        self.prompt_async_calls = 0
+
+    def prompt(self, *_args, **_kwargs):
+        self.prompt_calls += 1
+        raise AssertionError("interactive async loop should not use sync prompt()")
+
+    async def prompt_async(self, *_args, **_kwargs):
+        self.prompt_async_calls += 1
+        return next(self._responses)
 
 
 @pytest.mark.asyncio
@@ -64,6 +84,46 @@ Test project for async CLI testing.
                     # Verify agent was created
                     mock_agent_class.assert_called_once()
                     mock_agent.run.assert_called_once_with("Test task")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("interactive_loop", "session_patch", "goodbye_patch"),
+    [
+        (
+            main_interactive_loop_async,
+            "lunvex_code.main.get_prompt_session",
+            "lunvex_code.main.ui.print_goodbye",
+        ),
+        (
+            async_cli_interactive_loop_async,
+            "lunvex_code.async_cli.get_prompt_session",
+            "lunvex_code.async_cli.ui.print_goodbye",
+        ),
+    ],
+)
+async def test_interactive_loops_use_async_prompt(interactive_loop, session_patch, goodbye_patch):
+    """Interactive mode should use the async prompt API inside the running event loop."""
+
+    async def async_chat(_message):
+        return None
+
+    mock_agent = SimpleNamespace(
+        permissions=SimpleNamespace(yolo_mode=False, trust_mode=False),
+        config=SimpleNamespace(yolo_mode=False, trust_mode=False),
+        client=SimpleNamespace(model="deepseek-chat"),
+        chat=MagicMock(side_effect=async_chat),
+    )
+
+    session = FakeAsyncPromptSession(["help", "quit"])
+
+    with patch(session_patch, return_value=session):
+        with patch(goodbye_patch):
+            await interactive_loop(mock_agent)
+
+    assert session.prompt_calls == 0
+    assert session.prompt_async_calls == 2
+    mock_agent.chat.assert_not_called()
 
 
 @pytest.mark.asyncio

@@ -61,10 +61,12 @@ class TaskPlanner:
         """
         # Check for task complexity indicators
         complexity_indicators = [
-            r"\b(and|then|after|also|next|first|second|finally)\b",
-            r"\b(multiple|several|various|different)\b",
+            r"\b(and|then|after|also|next|first|second|finally|lastly)\b",
+            r"\b(multiple|several|various|different|both|each)\b",
             r"\.\.\.",  # Ellipsis indicating continuation
             r"[;:]",  # Multiple clauses
+            r"\b(refactor|implement|update|create|add|remove|fix|debug|test|document)\s+.*\s+(and|then)\s+",
+            r"\b(set up|configure|install|deploy|build)\s+",
         ]
 
         task_lower = task.lower()
@@ -76,9 +78,10 @@ class TaskPlanner:
 
         # Check for multiple file mentions
         file_patterns = [
-            r"\b(\w+\.(py|js|ts|java|cpp|h|go|rs|rb|php|md|txt|json|yaml|yml|toml))\b",
+            r"\b(\w+\.(py|js|ts|java|cpp|h|go|rs|rb|php|md|txt|json|yaml|yml|toml|ini|cfg|conf))\b",
+            r"\b(file|module|package|library|dependency|config|configuration|script)\b",
             r"in\s+(\w+/)*\w+",
-            r"file[s]?\s+\w+",
+            r"\b(main|app|index|setup|config|test|spec)\.\w+\b",
         ]
 
         file_mentions = sum(
@@ -91,8 +94,34 @@ class TaskPlanner:
         # Task is complex if:
         # - Has multiple complexity indicators OR
         # - Mentions multiple files OR
-        # - Is very long (> 50 words)
-        return indicator_count >= 2 or file_mentions >= 2 or word_count > 50
+        # - Is very long (> 30 words) OR
+        # - Has clear multi-step structure
+        has_multi_step = bool(
+            re.search(r"\b(first|second|third|step\s+\d+|phase\s+\d+)\b", task_lower, re.IGNORECASE)
+        )
+
+        # For async mode, we want to be more aggressive with planning
+        # to leverage parallel execution capabilities
+        # Check if we're in async context by checking if called from async agent
+        import inspect
+
+        is_async_context = False
+        try:
+            # Check call stack to see if we're called from async code
+            for frame_info in inspect.stack():
+                if "async" in frame_info.function.lower() or "_async" in frame_info.function:
+                    is_async_context = True
+                    break
+        except Exception:
+            pass
+
+        if is_async_context:
+            # In async mode, be more aggressive with planning
+            # Even moderately complex tasks benefit from decomposition
+            return indicator_count >= 1 or file_mentions >= 2 or word_count > 25 or has_multi_step
+        else:
+            # In sync mode, use original thresholds
+            return indicator_count >= 2 or file_mentions >= 2 or word_count > 30 or has_multi_step
 
     def _analyze_task_dependencies(self, task: str) -> Dict[str, Any]:
         """
@@ -120,7 +149,7 @@ class TaskPlanner:
         """
 
         try:
-            response = self.client.chat_complete([{"role": "user", "content": prompt}])
+            response = self.client.chat([{"role": "user", "content": prompt}])
             analysis = json.loads(response.content)
             return analysis
         except (json.JSONDecodeError, KeyError):
@@ -192,7 +221,7 @@ class TaskPlanner:
         """
 
         try:
-            response = self.client.chat_complete([{"role": "user", "content": prompt}])
+            response = self.client.chat([{"role": "user", "content": prompt}])
             subtask_data = json.loads(response.content)
 
             subtasks = []
@@ -355,6 +384,8 @@ class TaskPlanner:
         """
         Execute a task plan asynchronously using the provided agent.
 
+        In async mode, independent subtasks can be executed in parallel for better performance.
+
         Args:
             plan: TaskPlan to execute
             agent: AsyncAgent instance to use for execution
@@ -365,34 +396,37 @@ class TaskPlanner:
         from . import ui
 
         ui.print_info(f"📋 Executing task plan with {len(plan.subtasks)} subtasks")
+        ui.print_info("⚡ Async mode: Independent subtasks may execute in parallel")
 
         # Create subtask lookup
         subtask_map = {subtask.id: subtask for subtask in plan.subtasks}
 
-        # Execute in order
-        for subtask_id in plan.execution_order:
-            subtask = subtask_map[subtask_id]
+        # Track completed subtasks
+        completed_subtasks = set()
 
+        # Function to check if a subtask is ready to execute
+        def is_subtask_ready(subtask_id: str) -> bool:
+            subtask = subtask_map[subtask_id]
             # Check if all dependencies are completed
             for dep_id in subtask.dependencies:
-                dep = subtask_map.get(dep_id)
-                if not dep or not dep.completed:
-                    ui.print_error(
-                        f"Cannot execute {subtask_id}: dependency {dep_id} not completed"
-                    )
-                    plan.completed = False
-                    return f"Task failed: dependency {dep_id} not completed"
+                if dep_id not in completed_subtasks:
+                    return False
+            return True
 
-            # Execute subtask
-            ui.print_section(f"▶️ Executing subtask: {subtask.description}")
-
-            # Prepare context for this subtask
-            context_summary = self._prepare_subtask_context(subtask, plan.current_context)
-
-            # Build subtask prompt with context
-            subtask_prompt = self._build_subtask_prompt(subtask, context_summary)
+        # Function to execute a single subtask
+        async def execute_single_subtask(subtask_id: str) -> tuple[str, bool, str]:
+            """Execute a single subtask and return (subtask_id, success, result/error)."""
+            subtask = subtask_map[subtask_id]
 
             try:
+                ui.print_section(f"▶️ Executing subtask: {subtask.description}")
+
+                # Prepare context for this subtask
+                context_summary = self._prepare_subtask_context(subtask, plan.current_context)
+
+                # Build subtask prompt with context
+                subtask_prompt = self._build_subtask_prompt(subtask, context_summary)
+
                 # Execute using async agent
                 if hasattr(agent, "arun"):
                     result = await agent.arun(subtask_prompt, use_planning=False)
@@ -410,16 +444,72 @@ class TaskPlanner:
                 self._update_context_from_result(subtask, result, plan.current_context)
 
                 ui.print_success(f"✅ Subtask {subtask_id} completed")
+                return (subtask_id, True, result)
 
             except Exception as e:
                 subtask.completed = False
                 subtask.error = str(e)
                 ui.print_error(f"❌ Subtask {subtask_id} failed: {e}")
+                return (subtask_id, False, str(e))
 
-                # Option: continue with other subtasks or abort
-                # For now, abort on failure
-                plan.completed = False
-                return f"Task failed at subtask {subtask_id}: {e}"
+        # Execute subtasks with dependency-aware parallel execution
+        import asyncio
+
+        # Create a queue of subtasks to execute
+        pending_subtasks = set(plan.execution_order)
+        executing_tasks = {}
+
+        while pending_subtasks or executing_tasks:
+            # Find subtasks that are ready to execute
+            ready_subtasks = [
+                subtask_id for subtask_id in pending_subtasks if is_subtask_ready(subtask_id)
+            ]
+
+            # Start executing ready subtasks (up to 3 in parallel)
+            for subtask_id in ready_subtasks[:3]:  # Limit parallel execution
+                if subtask_id not in executing_tasks:
+                    task = asyncio.create_task(execute_single_subtask(subtask_id))
+                    executing_tasks[subtask_id] = task
+                    pending_subtasks.remove(subtask_id)
+
+            # Wait for at least one task to complete if we have tasks running
+            if executing_tasks:
+                done, _ = await asyncio.wait(
+                    executing_tasks.values(), return_when=asyncio.FIRST_COMPLETED
+                )
+
+                # Process completed tasks
+                for done_task in done:
+                    # Find which subtask this task was for
+                    for subtask_id, task in executing_tasks.items():
+                        if task is done_task:
+                            subtask_id_result, success, result = await task
+
+                            if not success:
+                                # Task failed - abort execution
+                                plan.completed = False
+                                return f"Task failed at subtask {subtask_id_result}: {result}"
+
+                            # Mark subtask as completed
+                            completed_subtasks.add(subtask_id_result)
+                            del executing_tasks[subtask_id_result]
+                            break
+
+            # If no tasks are executing but we still have pending tasks,
+            # there might be a circular dependency or logic error
+            if not executing_tasks and pending_subtasks:
+                # Check for circular dependencies
+                for subtask_id in pending_subtasks:
+                    if not is_subtask_ready(subtask_id):
+                        ui.print_error("❌ Circular dependency or logic error detected")
+                        ui.print_error(
+                            f"   Subtask {subtask_id} cannot execute - dependencies not met"
+                        )
+                        plan.completed = False
+                        return "Task failed: circular dependency or logic error"
+
+                # If we get here, all pending subtasks should be ready
+                # Continue to next iteration to start executing them
 
         # All subtasks completed
         plan.completed = True

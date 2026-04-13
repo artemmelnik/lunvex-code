@@ -53,8 +53,8 @@ dev = [
 ]
 
 [project.scripts]
-lunvex-code = "lunvex_code.cli:main"
-lvc = "lunvex_code.cli:main"
+lunvex-code = "lunvex_code.main:main"
+lvc = "lunvex_code.main:main"
 
 [build-system]
 requires = [

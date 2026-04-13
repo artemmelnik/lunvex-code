@@ -1,4 +1,4 @@
-"""Async CLI entry point for LunVex Code."""
+"""Main entry point for LunVex Code with async as default."""
 
 import asyncio
 import os
@@ -144,6 +144,7 @@ def print_help(agent: AsyncAgent) -> None:
   - Ask the AI to read files before editing them
   - Use 'always' when prompted to auto-approve similar operations
   - Create a LUNVEX.md file in your project root for project-specific context
+  - Complex tasks are automatically broken down into subtasks (async mode)
 """)
 
 
@@ -162,6 +163,7 @@ def print_status(agent: AsyncAgent) -> None:
         console.print("  Trust Mode: [dim]off[/dim]")
 
     console.print(f"  Model:      [blue]{agent.client.model}[/blue]")
+    console.print("  Mode:       [green]Async with automatic subtask planning[/green]")
     console.print()
 
 
@@ -174,6 +176,7 @@ async def create_and_run_agent_async(
     verbose: bool,
     no_context: bool,
     no_animation: bool = False,
+    no_planning: bool = False,
 ) -> None:
     """Create an async agent and run it with the given task or in interactive mode."""
     api_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -200,6 +203,12 @@ async def create_and_run_agent_async(
     # Print welcome
     ui.print_welcome(__version__, context.working_dir, context_loaded, yolo_mode=yolo)
 
+    # Show mode info
+    if not no_planning:
+        console.print("[green]✓[/green] Async mode with automatic subtask planning enabled")
+    else:
+        console.print("[yellow]⚠[/yellow] Subtask planning disabled (--no-planning)")
+
     # Create async agent
     try:
         client = LunVexClient(api_key=api_key, model=model)
@@ -219,7 +228,7 @@ async def create_and_run_agent_async(
     if task:
         # Single task mode
         try:
-            await agent.run(task)
+            await agent.run(task, use_planning=not no_planning)
         except KeyboardInterrupt:
             console.print("\n[warning]Interrupted[/warning]")
             raise typer.Exit(130)
@@ -229,7 +238,7 @@ async def create_and_run_agent_async(
 
 
 @app.command()
-async def run(
+def run(
     task: Optional[str] = typer.Argument(
         None,
         help="Task to execute (if not provided, starts interactive mode)",
@@ -273,19 +282,29 @@ async def run(
         "--no-animation",
         help="Disable thinking animations (show 'Thinking...' instead)",
     ),
+    no_planning: bool = typer.Option(
+        False,
+        "--no-planning",
+        help="Disable automatic task planning for complex tasks",
+    ),
 ) -> None:
     """
-    Run LunVex Code with a task or in interactive mode (async version).
+    Run LunVex Code with a task or in interactive mode.
+
+    Uses async mode by default with automatic subtask decomposition for complex tasks.
 
     Examples:
-        lunvex-code async-run
-        lunvex-code async-run "Fix the bug in auth.py"
-        lunvex-code async-run --trust "Run the tests"
-        lunvex-code async-run --yolo "Refactor the entire codebase"
-        lunvex-code async-run --no-animation "Analyze the code"
+        lunvex-code
+        lunvex-code "Fix the bug in auth.py"
+        lunvex-code --trust "Run the tests"
+        lunvex-code --yolo "Refactor the entire codebase"
+        lunvex-code --no-animation "Analyze the code"
+        lunvex-code --no-planning "Simple task"  # Disable subtask planning
     """
-    await create_and_run_agent_async(
-        task, model, trust, yolo, max_turns, verbose, no_context, no_animation
+    asyncio.run(
+        create_and_run_agent_async(
+            task, model, trust, yolo, max_turns, verbose, no_context, no_animation, no_planning
+        )
     )
 
 
@@ -462,13 +481,13 @@ def configure_llm_cache_cmd(
     console.print("[dim]Configuration saved to persistent storage[/dim]")
 
 
-async def main():
-    """Main async entry point - defaults to interactive mode if no args."""
+def main():
+    """Main entry point - defaults to interactive mode if no args."""
     # If no arguments provided, default to 'run' command
     if len(sys.argv) == 1:
         sys.argv.append("run")
-    await app()
+    app()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
